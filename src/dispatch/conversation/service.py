@@ -19,22 +19,21 @@ def get_by_channel_id_ignoring_channel_type(db_session, channel_id: str) -> Opti
         .one_or_none()
     )
 
-    if conversation:
-        if channel_id[0] != conversation.channel_id[0]:
-            # The channel type has changed. We update the channel id in the database
-            conversation_in = ConversationUpdate(channel_id=channel_id)
-            update(
-                db_session=db_session,
-                conversation=conversation,
-                conversation_in=conversation_in,
-            )
+    if conversation and channel_id[0] != conversation.channel_id[0]:
+        # The channel type has changed. We update the channel id in the database
+        conversation_in = ConversationUpdate(channel_id=channel_id)
+        update(
+            db_session=db_session,
+            conversation=conversation,
+            conversation_in=conversation_in,
+        )
 
-            event_service.log(
-                db_session=db_session,
-                source="Dispatch Core App",
-                description=f"Slack conversation type has changed ({channel_id[0]} -> {conversation.channel_id[0]})",
-                incident_id=conversation.incident_id,
-            )
+        event_service.log(
+            db_session=db_session,
+            source="Dispatch Core App",
+            description=f"Slack conversation type has changed ({channel_id[0]} -> {conversation.channel_id[0]})",
+            incident_id=conversation.incident_id,
+        )
 
     return conversation
 

@@ -27,13 +27,13 @@ def get_source_statuses(*, common: dict = Depends(common_parameters)):
 @router.get("/{source_status_id}", response_model=SourceStatusRead)
 def get_source_status(*, db_session: Session = Depends(get_db), source_status_id: PrimaryKey):
     """Given its unique ID, retrieve details about a single source status."""
-    status = get(db_session=db_session, source_status_id=source_status_id)
-    if not status:
+    if status := get(db_session=db_session, source_status_id=source_status_id):
+        return status
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The requested source status does not exist."}],
         )
-    return status
 
 
 @router.post("", response_model=SourceStatusRead)
@@ -65,10 +65,10 @@ def update_source_status(
 @router.delete("/{source_status_id}")
 def delete_source_status(*, db_session: Session = Depends(get_db), source_status_id: PrimaryKey):
     """Delete a source status, returning only an HTTP 200 OK if successful."""
-    status = get(db_session=db_session, source_status_id=source_status_id)
-    if not status:
+    if status := get(db_session=db_session, source_status_id=source_status_id):
+        delete(db_session=db_session, source_status_id=source_status_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An source status with this ID does not exist."}],
         )
-    delete(db_session=db_session, source_status_id=source_status_id)

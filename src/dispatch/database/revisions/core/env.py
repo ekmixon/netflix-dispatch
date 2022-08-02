@@ -22,10 +22,11 @@ CORE_SCHEMA_NAME = "dispatch_core"
 
 
 def include_object(object, name, type_, reflected, compare_to):
-    if type_ == "table":
-        if object.schema == CORE_SCHEMA_NAME:
-            return True
-    else:
+    if (
+        type_ == "table"
+        and object.schema == CORE_SCHEMA_NAME
+        or type_ != "table"
+    ):
         return True
 
 

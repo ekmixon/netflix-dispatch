@@ -58,8 +58,7 @@ def get_tickets(replies: List[dict]):
     tickets = []
     for r in replies:
         if r.get("content"):
-            for url in find_urls(r["content"]):
-                tickets.append({"web_link": url})
+            tickets.extend({"web_link": url} for url in find_urls(r["content"]))
     return tickets
 
 

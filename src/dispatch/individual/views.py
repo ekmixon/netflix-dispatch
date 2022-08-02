@@ -53,13 +53,15 @@ def create_individual(
 @router.get("/{individual_contact_id}", response_model=IndividualContactRead)
 def get_individual(*, db_session: Session = Depends(get_db), individual_contact_id: PrimaryKey):
     """Get an individual contact."""
-    individual = get(db_session=db_session, individual_contact_id=individual_contact_id)
-    if not individual:
+    if individual := get(
+        db_session=db_session, individual_contact_id=individual_contact_id
+    ):
+        return individual
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An individual with this id does not exist."}],
         )
-    return individual
 
 
 @router.put(
@@ -98,11 +100,12 @@ async def delete_individual(
     *, db_session: Session = Depends(get_db), individual_contact_id: PrimaryKey
 ):
     """Delete an individual contact."""
-    individual = get(db_session=db_session, individual_contact_id=individual_contact_id)
-    if not individual:
+    if individual := get(
+        db_session=db_session, individual_contact_id=individual_contact_id
+    ):
+        delete(db_session=db_session, individual_contact_id=individual_contact_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An individual with this id does not exist."}],
         )
-
-    delete(db_session=db_session, individual_contact_id=individual_contact_id)

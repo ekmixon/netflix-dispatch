@@ -42,13 +42,15 @@ def get_plugin_instances(*, common: dict = Depends(common_parameters)):
 )
 def get_plugin_instance(*, db_session: Session = Depends(get_db), plugin_instance_id: PrimaryKey):
     """Get a plugin instance."""
-    plugin = get_instance(db_session=db_session, plugin_instance_id=plugin_instance_id)
-    if not plugin:
+    if plugin := get_instance(
+        db_session=db_session, plugin_instance_id=plugin_instance_id
+    ):
+        return plugin
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A plugin instance with this id does not exist."}],
         )
-    return plugin
 
 
 @router.post(
@@ -101,11 +103,12 @@ def delete_plugin_instances(
     plugin_instance_id: PrimaryKey,
 ):
     """Deletes an existing plugin instance."""
-    plugin_instance = get_instance(db_session=db_session, plugin_instance_id=plugin_instance_id)
-    if not plugin_instance:
+    if plugin_instance := get_instance(
+        db_session=db_session, plugin_instance_id=plugin_instance_id
+    ):
+        delete_instance(db_session=db_session, plugin_instance_id=plugin_instance_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A plugin instance with this id does not exist."}],
         )
-
-    delete_instance(db_session=db_session, plugin_instance_id=plugin_instance_id)

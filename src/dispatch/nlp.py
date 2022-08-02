@@ -46,10 +46,5 @@ def extract_terms_from_text(text: str, matcher: PhraseMatcher) -> List[str]:
         # We try to filter out common stop words unless
         # we have surrounding context that would suggest they are not stop words.
         span = doc[start:end]
-        for token in span:
-            if token.is_stop:
-                continue
-
-            terms.append(token.text.lower())
-
+        terms.extend(token.text.lower() for token in span if not token.is_stop)
     return terms

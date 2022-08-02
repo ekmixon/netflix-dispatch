@@ -33,15 +33,18 @@ def search(
         )
         # add a filter for restricted incidents
         # TODO won't currently show incidents that you are a member
-        admin_projects = []
-        for p in common["current_user"].projects:
-            if p.role == UserRoles.admin:
-                admin_projects.append(p)
+        admin_projects = [
+            p
+            for p in common["current_user"].projects
+            if p.role == UserRoles.admin
+        ]
 
-        filtered_incidents = []
-        for incident in results["Incident"]:
-            if incident.project in admin_projects or incident.visibility == Visibility.open:
-                filtered_incidents.append(incident)
+        filtered_incidents = [
+            incident
+            for incident in results["Incident"]
+            if incident.project in admin_projects
+            or incident.visibility == Visibility.open
+        ]
 
         results["Incident"] = filtered_incidents
 

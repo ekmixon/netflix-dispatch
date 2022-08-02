@@ -52,11 +52,7 @@ def remove_participant(client: Any, event_id: int, participant: str):
     """Remove participant from calendar event."""
     event = get_event(client, event_id)
 
-    attendees = []
-    for a in event["attendees"]:
-        if a["email"] != participant:
-            attendees.append(a)
-
+    attendees = [a for a in event["attendees"] if a["email"] != participant]
     event["attendees"] = attendees
     return make_call(client.events(), "update", calendarId="primary", eventId=event_id, body=event)
 
@@ -84,8 +80,9 @@ def create_event(
 
     request_id = str(uuid.uuid4())
     body = {
-        "description": description if description else f"Situation Room for {name}. Please join.",
-        "summary": title if title else f"Situation Room for {name}",
+        "description": description
+        or f"Situation Room for {name}. Please join.",
+        "summary": title or f"Situation Room for {name}",
         "attendees": participants,
         "conferenceData": {
             "createRequest": {
@@ -96,6 +93,7 @@ def create_event(
         "guestsCanModify": True,
     }
 
+
     if start_time:
         raw_dt = datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S")
         start = timezone("America/Los_Angeles").localize(raw_dt).astimezone(timezone("Etc/UTC"))
@@ -103,12 +101,14 @@ def create_event(
         start = datetime.utcnow()
 
     end = start + timedelta(minutes=duration)
-    body.update(
-        {
-            "start": {"date": start.isoformat().split("T")[0], "timeZone": "Etc/UTC"},
-            "end": {"date": end.isoformat().split("T")[0], "timeZone": "Etc/UTC"},
-        }
-    )
+    body |= {
+        "start": {
+            "date": start.isoformat().split("T")[0],
+            "timeZone": "Etc/UTC",
+        },
+        "end": {"date": end.isoformat().split("T")[0], "timeZone": "Etc/UTC"},
+    }
+
 
     # TODO sometimes google is slow with the meeting invite, we should poll/wait
     return make_call(

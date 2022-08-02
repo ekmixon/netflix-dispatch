@@ -26,7 +26,10 @@ log = logging.getLogger(__name__)
 
 def option_from_template(text: str, value: str):
     """Helper function which generates the option block for modals / views"""
-    return {"text": {"type": "plain_text", "text": str(text), "emoji": True}, "value": str(value)}
+    return {
+        "text": {"type": "plain_text", "text": text, "emoji": True},
+        "value": value,
+    }
 
 
 def status_select_block(initial_option: str = None):
@@ -54,13 +57,13 @@ def incident_type_select_block(
     db_session: Session, initial_option: IncidentType = None, project_id: int = None
 ):
     """Builds the incident type select block."""
-    incident_type_options = []
-    for incident_type in incident_type_service.get_all_enabled(
-        db_session=db_session, project_id=project_id
-    ):
-        incident_type_options.append(
-            option_from_template(text=incident_type.name, value=incident_type.name)
+    incident_type_options = [
+        option_from_template(text=incident_type.name, value=incident_type.name)
+        for incident_type in incident_type_service.get_all_enabled(
+            db_session=db_session, project_id=project_id
         )
+    ]
+
     block = {
         "block_id": IncidentBlockId.type,
         "type": "input",
@@ -88,13 +91,14 @@ def incident_priority_select_block(
     db_session: Session, initial_option: IncidentPriority = None, project_id: int = None
 ):
     """Builds the incident priority select block."""
-    incident_priority_options = []
-    for incident_priority in incident_priority_service.get_all_enabled(
-        db_session=db_session, project_id=project_id
-    ):
-        incident_priority_options.append(
-            option_from_template(text=incident_priority.name, value=incident_priority.name)
+    incident_priority_options = [
+        option_from_template(
+            text=incident_priority.name, value=incident_priority.name
         )
+        for incident_priority in incident_priority_service.get_all_enabled(
+            db_session=db_session, project_id=project_id
+        )
+    ]
 
     block = {
         "block_id": IncidentBlockId.priority,
@@ -121,9 +125,10 @@ def incident_priority_select_block(
 
 def project_select_block(db_session: Session, initial_option: dict = None):
     """Builds the incident project select block."""
-    project_options = []
-    for project in project_service.get_all(db_session=db_session):
-        project_options.append(option_from_template(text=project.name, value=project.name))
+    project_options = [
+        option_from_template(text=project.name, value=project.name)
+        for project in project_service.get_all(db_session=db_session)
+    ]
 
     block = {
         "block_id": IncidentBlockId.project,
@@ -249,9 +254,10 @@ def resolution_input_block(initial_value: str = None):
 
 def participants_select_block(incident: Incident, initial_option: Participant = None):
     """Builds a static select with all current participants."""
-    participant_options = []
-    for p in incident.participants:
-        participant_options.append(option_from_template(text=p.individual.name, value=p.id))
+    participant_options = [
+        option_from_template(text=p.individual.name, value=p.id)
+        for p in incident.participants
+    ]
 
     block = {
         "block_id": UpdateParticipantBlockId.participant,

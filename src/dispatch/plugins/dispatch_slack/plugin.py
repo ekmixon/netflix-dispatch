@@ -194,8 +194,7 @@ class SlackContactPlugin(ContactPlugin):
         weblink = ""
 
         profile = get_user_profile_by_email(client, email)
-        profile_fields = profile.get("fields")
-        if profile_fields:
+        if profile_fields := profile.get("fields"):
             team = profile_fields.get(self.configuration.profile_team_field_id, {}).get(
                 "value", "Unknown"
             )
@@ -241,9 +240,7 @@ class SlackDocumentPlugin(DocumentPlugin):
             logger.debug(f"Querying slack for documents. Channels: {kwargs['channels']}")
 
             channels = kwargs["channels"].split(",")
-            for c in channels:
-                conversations.append(get_conversation_by_name(client, c))
-
+            conversations.extend(get_conversation_by_name(client, c) for c in channels)
         if kwargs["channel_match_pattern"]:
             try:
                 regex = kwargs["channel_match_pattern"]
@@ -256,9 +253,9 @@ class SlackDocumentPlugin(DocumentPlugin):
             logger.debug(
                 f"Querying slack for documents. ChannelsPattern: {kwargs['channel_match_pattern']}"
             )
-            for c in list_conversations(client):
-                if pattern.match(c["name"]):
-                    conversations.append(c)
+            conversations.extend(
+                c for c in list_conversations(client) if pattern.match(c["name"])
+            )
 
         for c in conversations:
             logger.info(f'Fetching channel messages. Channel Name: {c["name"]}')

@@ -131,9 +131,7 @@ class WorkflowRead(WorkflowBase):
     @validator("description", pre=True, always=True)
     def set_description(cls, v, values):
         """Sets the description"""
-        if not v:
-            return "No Description"
-        return v
+        return v or "No Description"
 
 
 class WorkflowNested(WorkflowRead):

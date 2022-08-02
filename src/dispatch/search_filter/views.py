@@ -76,11 +76,12 @@ def update_search_filter(
 @router.delete("/{search_filter_id}")
 def delete_filter(*, db_session: Session = Depends(get_db), search_filter_id: PrimaryKey):
     """Delete a search filter."""
-    search_filter = get(db_session=db_session, search_filter_id=search_filter_id)
-    if not search_filter:
+    if search_filter := get(
+        db_session=db_session, search_filter_id=search_filter_id
+    ):
+        delete(db_session=db_session, search_filter_id=search_filter_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A search filter with this id does not exist."}],
         )
-
-    delete(db_session=db_session, search_filter_id=search_filter_id)

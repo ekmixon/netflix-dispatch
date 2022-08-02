@@ -23,10 +23,8 @@ def get_env_tags(tag_list: List[str]) -> dict:
     for t in tag_list:
         tag_key, env_key = t.split(":")
 
-        env_value = os.environ.get(env_key)
-
-        if env_value:
-            tags.update({tag_key: env_value})
+        if env_value := os.environ.get(env_key):
+            tags[tag_key] = env_value
 
     return tags
 

@@ -25,11 +25,11 @@ class ProjectMixin(object):
     """Project mixin"""
 
     @declared_attr
-    def project_id(cls):  # noqa
+    def project_id(self):  # noqa
         return Column(Integer, ForeignKey("project.id", ondelete="CASCADE"))
 
     @declared_attr
-    def project(cls):  # noqa
+    def project(self):  # noqa
         return relationship("Project")
 
 
@@ -89,10 +89,10 @@ class EvergreenMixin(object):
             return True
 
     @overdue.expression
-    def overdue(cls):
+    def overdue(self):
         return (
-            func.date_part("day", func.now() - cls.evergreen_last_reminder_at)
-            >= cls.evergreen_reminder_interval
+            func.date_part("day", func.now() - self.evergreen_last_reminder_at)
+            >= self.evergreen_reminder_interval
         )
 
 
@@ -125,9 +125,8 @@ class ResourceBase(DispatchBase):
 
     @validator("weblink")
     def sanitize_weblink(cls, v):
-        if v:
-            if not validators.url(v):
-                raise ValueError("Weblink must be a valid url.")
+        if v and not validators.url(v):
+            raise ValueError("Weblink must be a valid url.")
         return v
 
 

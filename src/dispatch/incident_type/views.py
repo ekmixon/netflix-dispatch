@@ -30,8 +30,7 @@ def create_incident_type(
     incident_type_in: IncidentTypeCreate,
 ):
     """Create a new incident type."""
-    incident_type = create(db_session=db_session, incident_type_in=incident_type_in)
-    return incident_type
+    return create(db_session=db_session, incident_type_in=incident_type_in)
 
 
 @router.put(
@@ -62,10 +61,12 @@ def update_incident_type(
 @router.get("/{incident_type_id}", response_model=IncidentTypeRead)
 def get_incident_type(*, db_session: Session = Depends(get_db), incident_type_id: PrimaryKey):
     """Get an incident type."""
-    incident_type = get(db_session=db_session, incident_type_id=incident_type_id)
-    if not incident_type:
+    if incident_type := get(
+        db_session=db_session, incident_type_id=incident_type_id
+    ):
+        return incident_type
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The incident type with this id does not exist."}],
         )
-    return incident_type

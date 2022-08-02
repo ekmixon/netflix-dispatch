@@ -26,13 +26,11 @@ def get_resource_matches(
     matched_resources = []
     for resource in resources:
         for f in resource.filters:
-            match = search_filter_service.match(
+            if match := search_filter_service.match(
                 db_session=db_session,
                 filter_spec=f.expression,
                 class_instance=incident,
-            )
-
-            if match:
+            ):
                 matched_resources.append(
                     RecommendationMatch(
                         resource_state=json.loads(model_state(**resource.__dict__).json()),

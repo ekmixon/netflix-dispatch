@@ -49,13 +49,15 @@ router = APIRouter()
 
 def get_current_incident(*, db_session: Session = Depends(get_db), request: Request) -> Incident:
     """Fetches incident or returns a 404."""
-    incident = get(db_session=db_session, incident_id=request.path_params["incident_id"])
-    if not incident:
+    if incident := get(
+        db_session=db_session, incident_id=request.path_params["incident_id"]
+    ):
+        return incident
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The requested incident does not exist."}],
         )
-    return incident
 
 
 @router.get("", summary="Retrieve a list of all incidents.")
@@ -332,19 +334,20 @@ def get_incident_forecast(
 
         actual.append(len(incidents))
 
-    if not (len(predicted)):
-        return {
+    return (
+        {
+            "categories": categories,
+            "series": [
+                {"name": "Predicted", "data": predicted},
+                {"name": "Actual", "data": actual[1:]},
+            ],
+        }
+        if (len(predicted))
+        else {
             "categories": categories,
             "series": [
                 {"name": "Predicted", "data": []},
                 {"name": "Actual", "data": []},
             ],
         }
-
-    return {
-        "categories": categories,
-        "series": [
-            {"name": "Predicted", "data": predicted},
-            {"name": "Actual", "data": actual[1:]},
-        ],
-    }
+    )

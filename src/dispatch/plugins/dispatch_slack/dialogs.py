@@ -25,10 +25,11 @@ def create_assign_role_dialog(
     slack_client=None,
 ):
     """Creates a dialog for assigning a role."""
-    role_options = []
-    for role in ParticipantRoleType:
-        if role != ParticipantRoleType.participant:
-            role_options.append({"label": role, "value": role})
+    role_options = [
+        {"label": role, "value": role}
+        for role in ParticipantRoleType
+        if role != ParticipantRoleType.participant
+    ]
 
     dialog = {
         "callback_id": command["command"],
@@ -85,11 +86,10 @@ def create_engage_oncall_dialog(
         )
         return
 
-    oncall_service_options = []
-    for oncall_service in oncall_services:
-        oncall_service_options.append(
-            {"label": oncall_service.name, "value": oncall_service.external_id}
-        )
+    oncall_service_options = [
+        {"label": oncall_service.name, "value": oncall_service.external_id}
+        for oncall_service in oncall_services
+    ]
 
     page_options = [{"label": "Yes", "value": "Yes"}, {"label": "No", "value": "No"}]
 

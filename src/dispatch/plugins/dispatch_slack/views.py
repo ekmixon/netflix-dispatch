@@ -46,10 +46,7 @@ def create_ua_string():
     }
 
     # Concatenate and format the user-agent string to be passed into request headers
-    ua_string = []
-    for _, val in package_info.items():
-        ua_string.append(val)
-
+    ua_string = list(package_info.values())
     return " ".join(ua_string)
 
 
@@ -68,8 +65,7 @@ def verify_signature(organization: str, request_data: str, timestamp: int, signa
         req = f"v0:{timestamp}:{request_data}".encode("utf-8")
         slack_signing_secret = bytes(secret, "utf-8")
         h = hmac.new(slack_signing_secret, req, hashlib.sha256).hexdigest()
-        result = hmac.compare_digest(f"v0={h}", signature)
-        if result:
+        if result := hmac.compare_digest(f"v0={h}", signature):
             return p.instance.configuration
 
     raise HTTPException(status_code=403, detail=[{"msg": "Invalid request signature"}])

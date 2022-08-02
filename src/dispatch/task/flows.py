@@ -43,20 +43,19 @@ def create_reminder(db_session, assignee_email, tasks):
         log.warning("Task reminder not sent. No email plugin enabled.")
         return
 
-    items = []
-    for t in tasks:
-        items.append(
-            {
-                "name": t.incident.name,
-                "title": t.incident.title,
-                "creator": t.creator.individual.name,
-                "description": t.description,
-                "priority": t.priority,
-                "created_at": t.created_at,
-                "resolve_by": t.resolve_by,
-                "weblink": t.weblink,
-            }
-        )
+    items = [
+        {
+            "name": t.incident.name,
+            "title": t.incident.title,
+            "creator": t.creator.individual.name,
+            "description": t.description,
+            "priority": t.priority,
+            "created_at": t.created_at,
+            "resolve_by": t.resolve_by,
+            "weblink": t.weblink,
+        }
+        for t in tasks
+    ]
 
     notification_template = INCIDENT_TASK_REMINDER
     notification_type = "incident-task-reminder"
@@ -108,11 +107,9 @@ def create_or_update_task(
     db_session, incident, task: dict, notify: bool = False, sync_external: bool = True
 ):
     """Creates a new task in the database or updates an existing one."""
-    existing_task = task_service.get_by_resource_id(
+    if existing_task := task_service.get_by_resource_id(
         db_session=db_session, resource_id=task["resource_id"]
-    )
-
-    if existing_task:
+    ):
         # we save the existing task status before we attempt to update the record
         existing_status = existing_task.status
         task = task_service.update(
@@ -125,19 +122,20 @@ def create_or_update_task(
             sync_external=sync_external,
         )
 
-        if notify:
-            # determine if task was previously resolved
-            if task.status == TaskStatus.resolved:
-                if existing_status != TaskStatus.resolved:
-                    send_task_notification(
-                        incident,
-                        INCIDENT_TASK_RESOLVED_NOTIFICATION,
-                        task.creator,
-                        task.assignees,
-                        task.description,
-                        task.weblink,
-                        db_session,
-                    )
+        if (
+            notify
+            and task.status == TaskStatus.resolved
+            and existing_status != TaskStatus.resolved
+        ):
+            send_task_notification(
+                incident,
+                INCIDENT_TASK_RESOLVED_NOTIFICATION,
+                task.creator,
+                task.assignees,
+                task.description,
+                task.weblink,
+                db_session,
+            )
     else:
         # we don't attempt to create new tasks if the incident is currently closed
         if incident.status == IncidentStatus.closed:

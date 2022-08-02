@@ -27,13 +27,15 @@ def get_notifications(*, common: dict = Depends(common_parameters)):
 @router.get("/{notification_id}", response_model=NotificationRead)
 def get_notification(*, db_session: Session = Depends(get_db), notification_id: PrimaryKey):
     """Get a notification by its id."""
-    notification = get(db_session=db_session, notification_id=notification_id)
-    if not notification:
+    if notification := get(
+        db_session=db_session, notification_id=notification_id
+    ):
+        return notification
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A notification with this id does not exist."}],
         )
-    return notification
 
 
 @router.post(
@@ -45,8 +47,7 @@ def create_notification(
     *, db_session: Session = Depends(get_db), notification_in: NotificationCreate
 ):
     """Create a notification."""
-    notification = create(db_session=db_session, notification_in=notification_in)
-    return notification
+    return create(db_session=db_session, notification_in=notification_in)
 
 
 @router.put(
@@ -79,10 +80,12 @@ def update_notification(
 )
 def delete_notification(*, db_session: Session = Depends(get_db), notification_id: PrimaryKey):
     """Delete a notification, returning only an HTTP 200 OK if successful."""
-    notification = get(db_session=db_session, notification_id=notification_id)
-    if not notification:
+    if notification := get(
+        db_session=db_session, notification_id=notification_id
+    ):
+        delete(db_session=db_session, notification_id=notification_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A notification with this id does not exist."}],
         )
-    delete(db_session=db_session, notification_id=notification_id)

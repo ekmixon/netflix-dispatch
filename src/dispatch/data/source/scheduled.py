@@ -39,9 +39,7 @@ def sync_sources(db_session: SessionLocal, project: Project):
             log.debug(f"Skipping source, no externalId Source: {s}")
             continue
 
-        data = plugin.instance.get(external_id=s.external_id)
-
-        if data:
+        if data := plugin.instance.get(external_id=s.external_id):
             for k, v in data.items():
                 setattr(s, k, v)
 

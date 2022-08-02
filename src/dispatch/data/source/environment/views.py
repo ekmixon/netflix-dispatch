@@ -29,13 +29,15 @@ def get_source_environment(
     *, db_session: Session = Depends(get_db), source_environment_id: PrimaryKey
 ):
     """Given its unique ID, retrieve details about a single source_environment environment."""
-    source_environment = get(db_session=db_session, source_environment_id=source_environment_id)
-    if not source_environment:
+    if source_environment := get(
+        db_session=db_session, source_environment_id=source_environment_id
+    ):
+        return source_environment
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The requested source environment does not exist."}],
         )
-    return source_environment
 
 
 @router.post("", response_model=SourceEnvironmentRead)
@@ -43,8 +45,9 @@ def create_source_environment(
     *, db_session: Session = Depends(get_db), source_environment_in: SourceEnvironmentCreate
 ):
     """Create a new source_environment environment."""
-    source_environment = create(db_session=db_session, source_environment_in=source_environment_in)
-    return source_environment
+    return create(
+        db_session=db_session, source_environment_in=source_environment_in
+    )
 
 
 @router.put("/{source_environment_id}", response_model=SourceEnvironmentRead)
@@ -74,10 +77,12 @@ def delete_source_environment(
     *, db_session: Session = Depends(get_db), source_environment_id: PrimaryKey
 ):
     """Delete a source_environment environment, returning only an HTTP 200 OK if successful."""
-    source_environment = get(db_session=db_session, source_environment_id=source_environment_id)
-    if not source_environment:
+    if source_environment := get(
+        db_session=db_session, source_environment_id=source_environment_id
+    ):
+        delete(db_session=db_session, source_environment_id=source_environment_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An source_environment environment with this ID does not exist."}],
         )
-    delete(db_session=db_session, source_environment_id=source_environment_id)

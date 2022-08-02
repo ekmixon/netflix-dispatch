@@ -34,9 +34,9 @@ def sync_terms(db_session: SessionLocal, project: Project):
     for t in term_plugin.instance.get():
         log.debug(f"Adding Term. Term: {t}")
         term_in = TermCreate(**t)
-        term = term_service.get_by_text(db_session=db_session, text=term_in.text)
-
-        if term:
+        if term := term_service.get_by_text(
+            db_session=db_session, text=term_in.text
+        ):
             term_service.update(db_session=db_session, term=term, term_in=term_in)
         else:
             term_service.create(db_session=db_session, term_in=term_in)

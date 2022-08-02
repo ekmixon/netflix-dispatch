@@ -70,9 +70,7 @@ def add_participant(
 
 def remove_participant(user_email: str, incident: Incident, db_session: SessionLocal):
     """Removes a participant."""
-    inactivated = inactivate_participant(user_email, incident, db_session)
-
-    if inactivated:
+    if inactivated := inactivate_participant(user_email, incident, db_session):
         participant = get_by_incident_id_and_email(
             db_session=db_session, incident_id=incident.id, email=user_email
         )

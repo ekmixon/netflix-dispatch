@@ -76,21 +76,18 @@ def create(*, db_session, task_in: TaskCreate) -> Task:
 
     assignees = []
     for i in task_in.assignees:
-        assignee = incident_flows.incident_add_or_reactivate_participant_flow(
+        if assignee := incident_flows.incident_add_or_reactivate_participant_flow(
             db_session=db_session,
             incident_id=incident.id,
             user_email=i.individual.email,
-        )
-
-        # due to the freeform nature of task assignment, we can sometimes pick up other emails
-        # e.g. a google group that we cannot resolve to an individual assignee
-        if assignee:
+        ):
             assignees.append(assignee)
 
-    if not task_in.creator:
-        creator_email = task_in.owner.individual.email
-    else:
-        creator_email = task_in.creator.individual.email
+    creator_email = (
+        task_in.creator.individual.email
+        if task_in.creator
+        else task_in.owner.individual.email
+    )
 
     # add creator as a participant if they are not one already
     creator = incident_flows.incident_add_or_reactivate_participant_flow(
@@ -138,28 +135,25 @@ def create(*, db_session, task_in: TaskCreate) -> Task:
 def update(*, db_session, task: Task, task_in: TaskUpdate, sync_external: bool = True) -> Task:
     """Update an existing task."""
     # we add the assignees of the task to the incident if the status of the task is open
-    if task_in.status == TaskStatus.open:
-        # we don't allow a task to be unassigned
-        if task_in.assignees:
-            assignees = []
-            for i in task_in.assignees:
-                assignees.append(
-                    incident_flows.incident_add_or_reactivate_participant_flow(
-                        db_session=db_session,
-                        incident_id=task.incident.id,
-                        user_email=i.individual.email,
-                    )
-                )
-            task.assignees = assignees
-
-    # we add the owner of the task to the incident if the status of the task is open
-    if task_in.owner:
-        if task_in.status == TaskStatus.open:
-            task.owner = incident_flows.incident_add_or_reactivate_participant_flow(
+    if task_in.status == TaskStatus.open and task_in.assignees:
+        assignees = [
+            incident_flows.incident_add_or_reactivate_participant_flow(
                 db_session=db_session,
                 incident_id=task.incident.id,
-                user_email=task_in.owner.individual.email,
+                user_email=i.individual.email,
             )
+            for i in task_in.assignees
+        ]
+
+        task.assignees = assignees
+
+    # we add the owner of the task to the incident if the status of the task is open
+    if task_in.owner and task_in.status == TaskStatus.open:
+        task.owner = incident_flows.incident_add_or_reactivate_participant_flow(
+            db_session=db_session,
+            incident_id=task.incident.id,
+            user_email=task_in.owner.individual.email,
+        )
 
     update_data = task_in.dict(
         skip_defaults=True, exclude={"assignees", "owner", "creator", "incident", "tickets"}
@@ -168,15 +162,12 @@ def update(*, db_session, task: Task, task_in: TaskUpdate, sync_external: bool =
     for field in update_data.keys():
         setattr(task, field, update_data[field])
 
-    # if we have an external task plugin enabled, attempt to update the external resource as well
-    # we don't currently have a good way to get the correct file_id (we don't store a task <-> relationship)
-    # lets try in both the incident doc and PIR doc
-    drive_task_plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=task.incident.project.id, plugin_type="task"
-    )
-
-    if drive_task_plugin:
-        if sync_external:
+    if sync_external:
+        if drive_task_plugin := plugin_service.get_active_instance(
+            db_session=db_session,
+            project_id=task.incident.project.id,
+            plugin_type="task",
+        ):
             try:
                 if task.incident.incident_document:
                     file_id = task.incident.incident_document.resource_id

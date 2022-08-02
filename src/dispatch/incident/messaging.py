@@ -97,19 +97,18 @@ def send_welcome_ephemeral_message_to_participant(
         "conference_challenge": resolve_attr(incident, "conference.conference_challenge"),
     }
 
-    faq_doc = document_service.get_incident_faq_document(
+    if faq_doc := document_service.get_incident_faq_document(
         db_session=db_session, project_id=incident.project_id
-    )
-    if faq_doc:
-        message_kwargs.update({"faq_weblink": faq_doc.weblink})
+    ):
+        message_kwargs["faq_weblink"] = faq_doc.weblink
 
-    conversation_reference = document_service.get_conversation_reference_document(
+    if conversation_reference := document_service.get_conversation_reference_document(
         db_session=db_session, project_id=incident.project_id
-    )
-    if conversation_reference:
-        message_kwargs.update(
-            {"conversation_commands_reference_document_weblink": conversation_reference.weblink}
-        )
+    ):
+        message_kwargs[
+            "conversation_commands_reference_document_weblink"
+        ] = conversation_reference.weblink
+
 
     plugin.instance.send_ephemeral(
         incident.conversation.channel_id,
@@ -159,19 +158,18 @@ def send_welcome_email_to_participant(
         "contact_weblink": incident.commander.individual.weblink,
     }
 
-    faq_doc = document_service.get_incident_faq_document(
+    if faq_doc := document_service.get_incident_faq_document(
         db_session=db_session, project_id=incident.project_id
-    )
-    if faq_doc:
-        message_kwargs.update({"faq_weblink": faq_doc.weblink})
+    ):
+        message_kwargs["faq_weblink"] = faq_doc.weblink
 
-    conversation_reference = document_service.get_conversation_reference_document(
+    if conversation_reference := document_service.get_conversation_reference_document(
         db_session=db_session, project_id=incident.project_id
-    )
-    if conversation_reference:
-        message_kwargs.update(
-            {"conversation_commands_reference_document_weblink": conversation_reference.weblink}
-        )
+    ):
+        message_kwargs[
+            "conversation_commands_reference_document_weblink"
+        ] = conversation_reference.weblink
+
 
     notification_text = "Incident Notification"
     plugin.instance.send(
@@ -209,9 +207,8 @@ def get_suggested_document_items(incident: Incident, db_session: SessionLocal):
         # TODO add more intelligent ranking
         for i in suggested_documents[:5]:
             description = i.description
-            if not description:
-                if i.incident:
-                    description = i.incident.title
+            if not description and i.incident:
+                description = i.incident.title
 
             items.append({"name": i.name, "weblink": i.weblink, "description": description})
     return items
@@ -275,11 +272,10 @@ def send_incident_created_notifications(incident: Incident, db_session: SessionL
         "organization_slug": incident.project.organization.slug,
     }
 
-    faq_doc = document_service.get_incident_faq_document(
+    if faq_doc := document_service.get_incident_faq_document(
         db_session=db_session, project_id=incident.project_id
-    )
-    if faq_doc:
-        notification_kwargs.update({"faq_weblink": faq_doc.weblink})
+    ):
+        notification_kwargs["faq_weblink"] = faq_doc.weblink
 
     notification_params = {
         "text": "Incident Notification",
@@ -315,15 +311,14 @@ def send_incident_update_notifications(
 
         if previous_incident.incident_priority.name != incident.incident_priority.name:
             notification_template.append(INCIDENT_PRIORITY_CHANGE)
-    else:
-        if incident.status != IncidentStatus.closed:
-            if previous_incident.incident_type.name != incident.incident_type.name:
-                change = True
-                notification_template.append(INCIDENT_TYPE_CHANGE)
+    elif incident.status != IncidentStatus.closed:
+        if previous_incident.incident_type.name != incident.incident_type.name:
+            change = True
+            notification_template.append(INCIDENT_TYPE_CHANGE)
 
-            if previous_incident.incident_priority.name != incident.incident_priority.name:
-                change = True
-                notification_template.append(INCIDENT_PRIORITY_CHANGE)
+        if previous_incident.incident_priority.name != incident.incident_priority.name:
+            change = True
+            notification_template.append(INCIDENT_PRIORITY_CHANGE)
 
     if not change:
         # we don't need to notify
@@ -337,10 +332,11 @@ def send_incident_update_notifications(
         incident_conversation_notification_template = notification_template.copy()
         incident_conversation_notification_template.insert(0, INCIDENT_NAME)
 
-        convo_plugin = plugin_service.get_active_instance(
-            db_session=db_session, project_id=incident.project.id, plugin_type="conversation"
-        )
-        if convo_plugin:
+        if convo_plugin := plugin_service.get_active_instance(
+            db_session=db_session,
+            project_id=incident.project.id,
+            plugin_type="conversation",
+        ):
             convo_plugin.instance.send(
                 incident.conversation.channel_id,
                 notification_text,
@@ -429,10 +425,11 @@ def send_incident_participant_announcement_message(
     )
 
     participant_info = {}
-    contact_plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=incident.project.id, plugin_type="contact"
-    )
-    if contact_plugin:
+    if contact_plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=incident.project.id,
+        plugin_type="contact",
+    ):
         participant_info = contact_plugin.instance.get(participant_email, db_session=db_session)
 
     participant_name = participant_info.get("fullname", "Unknown")
@@ -444,10 +441,7 @@ def send_incident_participant_announcement_message(
     participant_active_roles = participant_role_service.get_all_active_roles(
         db_session=db_session, participant_id=participant.id
     )
-    participant_roles = []
-    for role in participant_active_roles:
-        participant_roles.append(role.role)
-
+    participant_roles = [role.role for role in participant_active_roles]
     participant_avatar_url = convo_plugin.instance.get_participant_avatar_url(participant_email)
 
     participant_name_mrkdwn = participant_name
@@ -678,23 +672,23 @@ def send_incident_resources_ephemeral_message_to_participant(
     }
 
     if incident.incident_review_document:
-        message_kwargs.update(
-            {"review_document_weblink": incident.incident_review_document.weblink}
-        )
+        message_kwargs[
+            "review_document_weblink"
+        ] = incident.incident_review_document.weblink
 
-    faq_doc = document_service.get_incident_faq_document(
-        db_session=db_session, project_id=incident.project_id
-    )
-    if faq_doc:
-        message_kwargs.update({"faq_weblink": faq_doc.weblink})
 
-    conversation_reference = document_service.get_conversation_reference_document(
+    if faq_doc := document_service.get_incident_faq_document(
         db_session=db_session, project_id=incident.project_id
-    )
-    if conversation_reference:
-        message_kwargs.update(
-            {"conversation_commands_reference_document_weblink": conversation_reference.weblink}
-        )
+    ):
+        message_kwargs["faq_weblink"] = faq_doc.weblink
+
+    if conversation_reference := document_service.get_conversation_reference_document(
+        db_session=db_session, project_id=incident.project_id
+    ):
+        message_kwargs[
+            "conversation_commands_reference_document_weblink"
+        ] = conversation_reference.weblink
+
 
     # we send the ephemeral message
     plugin.instance.send_ephemeral(

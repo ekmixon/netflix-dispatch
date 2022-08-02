@@ -7,7 +7,7 @@ def get_oncall_email(client, service: dict) -> str:
     )
     filter_value = escalation_policy["escalation_rules"][0]["targets"][0]["id"]
 
-    oncalls = list(
+    if oncalls := list(
         client.iter_all(
             "oncalls",  # method
             {
@@ -15,9 +15,7 @@ def get_oncall_email(client, service: dict) -> str:
                 "escalation_policy_ids[]": [escalation_policy_id],
             },  # params
         )
-    )
-
-    if oncalls:
+    ):
         user_id = list(oncalls)[0]["user"]["id"]
     else:
         raise Exception(
@@ -55,6 +53,4 @@ def page_oncall(
         "escalation_policy": {"id": escalation_policy_id, "type": "escalation_policy_reference"},
     }
     headers = {"from": from_email}
-    incident = client.rpost("/incidents", json=data, headers=headers)
-
-    return incident
+    return client.rpost("/incidents", json=data, headers=headers)

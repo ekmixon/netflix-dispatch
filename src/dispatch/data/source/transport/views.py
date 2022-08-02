@@ -27,13 +27,15 @@ def get_source_transports(*, common: dict = Depends(common_parameters)):
 @router.get("/{source_transport_id}", response_model=SourceTransportRead)
 def get_source_transport(*, db_session: Session = Depends(get_db), source_transport_id: PrimaryKey):
     """Given its unique ID, retrieve details about a single source transport."""
-    transport = get(db_session=db_session, source_transport_id=source_transport_id)
-    if not transport:
+    if transport := get(
+        db_session=db_session, source_transport_id=source_transport_id
+    ):
+        return transport
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The requested source transport does not exist."}],
         )
-    return transport
 
 
 @router.post("", response_model=SourceTransportRead)
@@ -52,15 +54,17 @@ def update_source_transport(
     source_transport_in: SourceTransportUpdate,
 ):
     """Update a source transport."""
-    transport = get(db_session=db_session, source_transport_id=source_transport_id)
-    if not transport:
+    if transport := get(
+        db_session=db_session, source_transport_id=source_transport_id
+    ):
+        return update(
+            db_session=db_session, source_transport=transport, source_transport_in=source_transport_in
+        )
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An source transport with this ID does not exist."}],
         )
-    return update(
-        db_session=db_session, source_transport=transport, source_transport_in=source_transport_in
-    )
 
 
 @router.delete("/{source_transport_id}")
@@ -68,10 +72,12 @@ def delete_source_transport(
     *, db_session: Session = Depends(get_db), source_transport_id: PrimaryKey
 ):
     """Delete a source transport, returning only an HTTP 200 OK if successful."""
-    transport = get(db_session=db_session, source_transport_id=source_transport_id)
-    if not transport:
+    if transport := get(
+        db_session=db_session, source_transport_id=source_transport_id
+    ):
+        delete(db_session=db_session, source_transport_id=source_transport_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An source transport with this ID does not exist."}],
         )
-    delete(db_session=db_session, source_transport_id=source_transport_id)

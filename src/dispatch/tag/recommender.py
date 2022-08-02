@@ -46,21 +46,14 @@ def correlation(df, tag_a, tag_b):
     )  # shape[0] returns the number of rows
     positive_outcomes = a_and_b.shape[0]
 
-    # Calculate the final correlation coefficient
-    r = positive_outcomes / possible_outcomes
-
-    return r
+    return positive_outcomes / possible_outcomes
 
 
 def correlate_with_every_tag(df, tag_a):
     """Create correlations between every tag."""
 
     unique_tags = list(df.columns)
-    # Loop through every tag and store the correlation in a list
-    correlation_list = []
-    for tag_b in unique_tags:
-        correlation_list.append(correlation(df, tag_a, tag_b))
-    return correlation_list
+    return [correlation(df, tag_a, tag_b) for tag_b in unique_tags]
 
 
 def get_unique_tags(items: List[Any]):
@@ -76,10 +69,11 @@ def create_correlation_dataframe(dataframe):
     """Create the correlation dataframe based on the boolean dataframe."""
     unique_tags = list(dataframe.columns)
 
-    correlation_matrix_dict = {}
+    correlation_matrix_dict = {
+        tag_a: correlate_with_every_tag(dataframe, tag_a)
+        for tag_a in unique_tags
+    }
 
-    for tag_a in unique_tags:
-        correlation_matrix_dict[tag_a] = correlate_with_every_tag(dataframe, tag_a)
 
     correlated_dataframe = pd.DataFrame(correlation_matrix_dict)
     correlated_dataframe["index"] = unique_tags
@@ -119,10 +113,7 @@ def find_correlations(dataframe, tag):
         correlations.append(corr)
         columns.append(col)
 
-    # Create a df out of the lists
-    results_df = pd.DataFrame({"tag": columns, "correlation": correlations})
-
-    return results_df
+    return pd.DataFrame({"tag": columns, "correlation": correlations})
 
 
 def find_highest_correlations(correlated_dataframe, recommendations):
@@ -130,10 +121,7 @@ def find_highest_correlations(correlated_dataframe, recommendations):
     # Sort the input df
     corr_df_sorted = correlated_dataframe.sort_values(by=["correlation"], ascending=False)
 
-    # Extract the relevant correlations
-    corr_df_sliced = corr_df_sorted.iloc[1 : recommendations + 1]  # noqa
-
-    return corr_df_sliced
+    return corr_df_sorted.iloc[1 : recommendations + 1]
 
 
 def get_recommendations(
@@ -163,9 +151,10 @@ def get_recommendations(
         )
 
     # convert back to tag objects
-    tags = []
-    for t in recommendations_dataframe["tag"][:recommendations]:
-        tags.append(tag_service.get(db_session=db_session, tag_id=int(t)))
+    tags = [
+        tag_service.get(db_session=db_session, tag_id=int(t))
+        for t in recommendations_dataframe["tag"][:recommendations]
+    ]
 
     log.debug(
         f"Making tag recommendation. RecommendedTags: {','.join([t.name for t in tags])} ModelName: {model_name}"

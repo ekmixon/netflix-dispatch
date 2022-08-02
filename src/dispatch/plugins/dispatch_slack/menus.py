@@ -42,7 +42,7 @@ def menu_functions(action_id: str):
     """Handles all menu requests."""
     menu_mappings = {IncidentBlockId.tags: get_tags}
 
-    for key in menu_mappings.keys():
+    for key in menu_mappings:
         if key in action_id:
             return menu_mappings[key]
 
@@ -70,9 +70,7 @@ def get_tags(
 
     submitted_form = request.get("view")
     parsed_form_data = parse_submitted_form(submitted_form)
-    project = parsed_form_data.get(IncidentBlockId.project)
-
-    if project:
+    if project := parsed_form_data.get(IncidentBlockId.project):
         filter_spec = {
             "and": [{"model": "Project", "op": "==", "field": "name", "value": project["value"]}]
         }
@@ -90,23 +88,20 @@ def get_tags(
         if not tag_name:
             query_str = None
 
-        tags = search_filter_sort_paginate(
-            db_session=db_session, model="Tag", query_str=query_str, filter_spec=filter_spec
-        )
-    else:
-        tags = search_filter_sort_paginate(
-            db_session=db_session, model="Tag", query_str=query_str, filter_spec=filter_spec
-        )
-
-    options = []
-    for t in tags["items"]:
-        options.append(
-            {
-                "text": {"type": "plain_text", "text": f"{t.tag_type.name}/{t.name}"},
-                "value": str(
-                    t.id
-                ),  # NOTE slack doesn't not accept int's as values (fails silently)
-            }
-        )
+    tags = search_filter_sort_paginate(
+        db_session=db_session, model="Tag", query_str=query_str, filter_spec=filter_spec
+    )
+    options = [
+        {
+            "text": {
+                "type": "plain_text",
+                "text": f"{t.tag_type.name}/{t.name}",
+            },
+            "value": str(
+                t.id
+            ),  # NOTE slack doesn't not accept int's as values (fails silently)
+        }
+        for t in tags["items"]
+    ]
 
     return {"options": options}

@@ -35,11 +35,13 @@ def get_by_name_or_raise(
     *, db_session, project_id, source_data_format_in=SourceDataFormatRead
 ) -> SourceDataFormatRead:
     """Returns the source specified or raises ValidationError."""
-    data_format = get_by_name(
-        db_session=db_session, project_id=project_id, name=source_data_format_in.name
-    )
-
-    if not data_format:
+    if data_format := get_by_name(
+        db_session=db_session,
+        project_id=project_id,
+        name=source_data_format_in.name,
+    ):
+        return data_format
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -52,8 +54,6 @@ def get_by_name_or_raise(
             ],
             model=SourceDataFormatRead,
         )
-
-    return data_format
 
 
 def get_all(*, db_session, project_id: int) -> List[Optional[SourceDataFormat]]:
@@ -84,8 +84,7 @@ def get_or_create(*, db_session, source_data_format_in: SourceDataFormatCreate) 
     else:
         q = db_session.query(SourceDataFormat).filter_by(name=source_data_format_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(

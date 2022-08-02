@@ -26,9 +26,11 @@ def get_by_name(*, db_session, project_id: int, name: str) -> Optional[Query]:
 
 def get_by_name_or_raise(*, db_session, query_in: QueryRead, project_id: int) -> QueryRead:
     """Returns the query specified or raises ValidationError."""
-    query = get_by_name(db_session=db_session, name=query_in.name, project_id=project_id)
-
-    if not query:
+    if query := get_by_name(
+        db_session=db_session, name=query_in.name, project_id=project_id
+    ):
+        return query
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -41,8 +43,6 @@ def get_by_name_or_raise(*, db_session, query_in: QueryRead, project_id: int) ->
             ],
             model=QueryRead,
         )
-
-    return query
 
 
 def get_all(*, db_session):
@@ -60,9 +60,10 @@ def create(*, db_session, query_in: QueryCreate) -> Query:
         db_session=db_session, project_id=project.id, source_in=query_in.source
     )
 
-    tags = []
-    for t in query_in.tags:
-        tags.append(tag_service.get_or_create(db_session=db_session, tag_in=t))
+    tags = [
+        tag_service.get_or_create(db_session=db_session, tag_in=t)
+        for t in query_in.tags
+    ]
 
     query = Query(
         **query_in.dict(exclude={"project", "tags", "source"}),
@@ -83,8 +84,7 @@ def get_or_create(*, db_session, query_in: QueryCreate) -> Query:
     else:
         q = db_session.query(Query).filter_by(name=query_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, query_in=query_in)
@@ -99,9 +99,10 @@ def update(*, db_session, query: Query, query_in: QueryUpdate) -> Query:
         db_session=db_session, project_id=query.project.id, source_in=query_in.source
     )
 
-    tags = []
-    for t in query_in.tags:
-        tags.append(tag_service.get_or_create(db_session=db_session, tag_in=t))
+    tags = [
+        tag_service.get_or_create(db_session=db_session, tag_in=t)
+        for t in query_in.tags
+    ]
 
     for field in query_data:
         if field in update_data:

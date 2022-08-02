@@ -23,9 +23,9 @@ def get_default(*, db_session) -> Optional[Organization]:
 
 def get_default_or_raise(*, db_session) -> Organization:
     """Returns the default organization or raise a ValidationError if one doesn't exist."""
-    organization = get_default(db_session=db_session)
-
-    if not organization:
+    if organization := get_default(db_session=db_session):
+        return organization
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -35,7 +35,6 @@ def get_default_or_raise(*, db_session) -> Organization:
             ],
             model=OrganizationRead,
         )
-    return organization
 
 
 def get_by_name(*, db_session, name: str) -> Optional[Organization]:
@@ -45,9 +44,11 @@ def get_by_name(*, db_session, name: str) -> Optional[Organization]:
 
 def get_by_name_or_raise(*, db_session, organization_in=OrganizationRead) -> Organization:
     """Returns the organization specified or raises ValidationError."""
-    organization = get_by_name(db_session=db_session, name=organization_in.name)
-
-    if not organization:
+    if organization := get_by_name(
+        db_session=db_session, name=organization_in.name
+    ):
+        return organization
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -57,8 +58,6 @@ def get_by_name_or_raise(*, db_session, organization_in=OrganizationRead) -> Org
             ],
             model=OrganizationRead,
         )
-
-    return organization
 
 
 def get_by_slug(*, db_session, slug: str) -> Optional[Organization]:
@@ -68,9 +67,11 @@ def get_by_slug(*, db_session, slug: str) -> Optional[Organization]:
 
 def get_by_slug_or_raise(*, db_session, organization_in=OrganizationRead) -> Organization:
     """Returns the organization specified or raises ValidationError."""
-    organization = get_by_slug(db_session=db_session, slug=organization_in.slug)
-
-    if not organization:
+    if organization := get_by_slug(
+        db_session=db_session, slug=organization_in.slug
+    ):
+        return organization
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -80,8 +81,6 @@ def get_by_slug_or_raise(*, db_session, organization_in=OrganizationRead) -> Org
             ],
             model=OrganizationRead,
         )
-
-    return organization
 
 
 def get_by_name_or_default(*, db_session, organization_in=OrganizationRead) -> Organization:
@@ -118,8 +117,7 @@ def get_or_create(*, db_session, organization_in: OrganizationCreate) -> Organiz
     else:
         q = db_session.query(Organization).filter_by(**organization_in.dict(exclude={"id"}))
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, organization_in=organization_in)

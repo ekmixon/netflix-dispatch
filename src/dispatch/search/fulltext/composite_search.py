@@ -55,10 +55,7 @@ class CompositeSearch(object):
                 vector.label("vector"),
                 literal(model_class.__name__).label("type"),
             )
-            if qs is None:
-                qs = q
-            else:
-                qs = qs.union(q)
+            qs = q if qs is None else qs.union(q)
         return qs
 
     def build_query(self, search_query, vector=None, regconfig=None, sort=False):

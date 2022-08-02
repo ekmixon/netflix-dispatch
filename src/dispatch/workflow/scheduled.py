@@ -62,35 +62,34 @@ def sync_workflows(db_session, project, workflow_plugin, incidents, notify: bool
                 instance_in=WorkflowInstanceUpdate(**instance_data),
             )
 
-            if notify:
-                if instance_status_old != instance.status:
-                    if instance.status == WorkflowInstanceStatus.completed:
-                        send_workflow_notification(
-                            project.id,
-                            incident.conversation.channel_id,
-                            INCIDENT_WORKFLOW_COMPLETE_NOTIFICATION,
-                            db_session,
-                            instance_status_old=instance_status_old,
-                            instance_status_new=instance.status,
-                            instance_weblink=instance.weblink,
-                            instance_creator_name=instance.creator.individual.name,
-                            instance_artifacts=instance.artifacts,
-                            workflow_name=instance.workflow.name,
-                            workflow_description=instance.workflow.description,
-                        )
-                    else:
-                        send_workflow_notification(
-                            project.id,
-                            incident.conversation.channel_id,
-                            INCIDENT_WORKFLOW_UPDATE_NOTIFICATION,
-                            db_session,
-                            instance_status_old=instance_status_old,
-                            instance_status_new=instance.status,
-                            instance_weblink=instance.weblink,
-                            instance_creator_name=instance.creator.individual.name,
-                            workflow_name=instance.workflow.name,
-                            workflow_description=instance.workflow.description,
-                        )
+            if notify and instance_status_old != instance.status:
+                if instance.status == WorkflowInstanceStatus.completed:
+                    send_workflow_notification(
+                        project.id,
+                        incident.conversation.channel_id,
+                        INCIDENT_WORKFLOW_COMPLETE_NOTIFICATION,
+                        db_session,
+                        instance_status_old=instance_status_old,
+                        instance_status_new=instance.status,
+                        instance_weblink=instance.weblink,
+                        instance_creator_name=instance.creator.individual.name,
+                        instance_artifacts=instance.artifacts,
+                        workflow_name=instance.workflow.name,
+                        workflow_description=instance.workflow.description,
+                    )
+                else:
+                    send_workflow_notification(
+                        project.id,
+                        incident.conversation.channel_id,
+                        INCIDENT_WORKFLOW_UPDATE_NOTIFICATION,
+                        db_session,
+                        instance_status_old=instance_status_old,
+                        instance_status_new=instance.status,
+                        instance_weblink=instance.weblink,
+                        instance_creator_name=instance.creator.individual.name,
+                        workflow_name=instance.workflow.name,
+                        workflow_description=instance.workflow.description,
+                    )
 
 
 @scheduler.add(every(WORKFLOW_SYNC_INTERVAL).seconds, name="incident-workflow-sync")

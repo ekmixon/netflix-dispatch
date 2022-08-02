@@ -25,11 +25,7 @@ class Scheduler(object):
         """Adds a task to the scheduler."""
 
         def decorator(func):
-            if not kwargs.get("name"):
-                name = func.__name__
-            else:
-                name = kwargs.pop("name")
-
+            name = kwargs.pop("name") if kwargs.get("name") else func.__name__
             self.registered_tasks.append({"name": name, "func": func, "job": job.do(func)})
 
         return decorator

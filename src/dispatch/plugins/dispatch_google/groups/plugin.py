@@ -52,19 +52,13 @@ def expand_group(client: Any, group_key: str):
         if response.get("members"):
             return [x["email"] for x in response.get("members", [])]
     except HttpError as e:
-        if e.resp.status == 404:
-            pass
-
+        pass
     return []
 
 
 def add_member(client: Any, group_key: str, email: str, role: str):
     """Adds a member to a google group."""
-    members = [email]
-
-    if role == "OWNER":
-        members = expand_group(client, group_key)
-
+    members = expand_group(client, group_key) if role == "OWNER" else [email]
     for m in members:
         body = {"email": m, "role": role}
         try:

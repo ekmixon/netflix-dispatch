@@ -89,7 +89,7 @@ class Operator(object):
             operator = "=="
 
         if operator not in self.OPERATORS:
-            raise BadFilterFormat("Operator `{}` not valid.".format(operator))
+            raise BadFilterFormat(f"Operator `{operator}` not valid.")
 
         self.operator = operator
         self.function = self.OPERATORS[operator]
@@ -105,18 +105,16 @@ class Filter(object):
         except KeyError:
             raise BadFilterFormat("`field` is a mandatory filter attribute.")
         except TypeError:
-            raise BadFilterFormat("Filter spec `{}` should be a dictionary.".format(filter_spec))
+            raise BadFilterFormat(f"Filter spec `{filter_spec}` should be a dictionary.")
 
         self.operator = Operator(filter_spec.get("op"))
         self.value = filter_spec.get("value")
-        value_present = True if "value" in filter_spec else False
+        value_present = "value" in filter_spec
         if not value_present and self.operator.arity == 2:
             raise BadFilterFormat("`value` must be provided.")
 
     def get_named_models(self):
-        if "model" in self.filter_spec:
-            return {self.filter_spec["model"]}
-        return set()
+        return {self.filter_spec["model"]} if "model" in self.filter_spec else set()
 
     def format_for_sqlalchemy(self, query, default_model):
         filter_spec = self.filter_spec
@@ -147,8 +145,7 @@ class BooleanFilter(object):
     def get_named_models(self):
         models = SortedSet()
         for filter in self.filters:
-            named_models = filter.get_named_models()
-            if named_models:
+            if named_models := filter.get_named_models():
                 models.add(*named_models)
         return models
 
@@ -178,17 +175,16 @@ def build_filters(filter_spec):
 
                 if not _is_iterable_filter(fn_args):
                     raise BadFilterFormat(
-                        "`{}` value must be an iterable across the function "
-                        "arguments".format(boolean_function.key)
+                        f"`{boolean_function.key}` value must be an iterable across the function arguments"
                     )
+
                 if boolean_function.only_one_arg and len(fn_args) != 1:
-                    raise BadFilterFormat(
-                        "`{}` must have one argument".format(boolean_function.key)
-                    )
+                    raise BadFilterFormat(f"`{boolean_function.key}` must have one argument")
                 if not boolean_function.only_one_arg and len(fn_args) < 1:
                     raise BadFilterFormat(
-                        "`{}` must have one or more arguments".format(boolean_function.key)
+                        f"`{boolean_function.key}` must have one or more arguments"
                     )
+
                 return [BooleanFilter(boolean_function.sqlalchemy_fn, *build_filters(fn_args))]
 
     return [Filter(filter_spec)]
@@ -227,10 +223,7 @@ def get_model_class_by_name(registry, name):
 
 
 def get_named_models(filters):
-    models = []
-    for filter in filters:
-        models.append(filter.get_named_models())
-    return models
+    return [filter.get_named_models() for filter in filters]
 
 
 def get_default_model(query):
@@ -324,9 +317,10 @@ def apply_filters(query, filter_spec, model_cls=None, do_auto_join=True):
     if do_auto_join:
         query = auto_join(query, filter_models)
 
-    sqlalchemy_filters = [filter.format_for_sqlalchemy(query, default_model) for filter in filters]
-
-    if sqlalchemy_filters:
+    if sqlalchemy_filters := [
+        filter.format_for_sqlalchemy(query, default_model)
+        for filter in filters
+    ]:
         query = query.filter(*sqlalchemy_filters)
 
     return query
@@ -465,7 +459,7 @@ def search_filter_sort_paginate(
         query = db_session.query(model_cls)
 
         if query_str:
-            sort = False if sort_by else True
+            sort = not sort_by
             query = search(query_str=query_str, query=query, model=model, sort=sort)
 
         query = apply_model_specific_filters(model_cls, query, current_user, role)

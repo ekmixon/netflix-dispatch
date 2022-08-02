@@ -96,7 +96,7 @@ class BaseBuildCommand(Command):
         # build_ext is inplace or we are invoked through the install
         # command (easiest check is to see if it's finalized).
         if self.inplace is None:
-            self.inplace = (build_ext.inplace or sdist.finalized) and 1 or 0
+            self.inplace = 1 if (build_ext.inplace or sdist.finalized) else 0
 
         # If we're coming from sdist, clear the hell out of the dist
         # folder first.
@@ -111,19 +111,15 @@ class BaseBuildCommand(Command):
         if self.inplace:
             log.debug("in-place js building enabled")
             self.build_lib = "src"
-        # Otherwise we fetch build_lib from the build command.
         else:
             self.set_undefined_options("build", ("build_lib", "build_lib"))
-            log.debug("regular js build: build path is %s" % self.build_lib)
+            log.debug(f"regular js build: build path is {self.build_lib}")
 
         if self.work_path is None:
             self.work_path = self.get_root_path()
 
     def _needs_built(self):
-        for path in self.get_dist_paths():
-            if not os.path.isdir(path):
-                return True
-        return False
+        return any(not os.path.isdir(path) for path in self.get_dist_paths())
 
     def _setup_git(self):
         work_path = self.work_path
@@ -255,7 +251,7 @@ class BuildAssetsCommand(BaseBuildCommand):
             except Exception:
                 pass
             else:
-                log.info("pulled version information from '{}'".format(json_path))
+                log.info(f"pulled version information from '{json_path}'")
                 version, build = data["version"], data["build"]
 
         return {"version": version, "build": build}
@@ -269,9 +265,7 @@ class BuildAssetsCommand(BaseBuildCommand):
             data = json.load(fp)
         if data.get("version") != version_info.get("version"):
             return True
-        if data.get("build") != version_info.get("build"):
-            return True
-        return False
+        return data.get("build") != version_info.get("build")
 
     def _needs_built(self):
         if BaseBuildCommand._needs_built(self):
@@ -282,12 +276,9 @@ class BuildAssetsCommand(BaseBuildCommand):
     def _build(self):
         version_info = self._get_package_version()
         log.info(
-            "building assets for {} v{} (build {})".format(
-                self.distribution.get_name(),
-                version_info["version"] or "UNKNOWN",
-                version_info["build"] or "UNKNOWN",
-            )
+            f'building assets for {self.distribution.get_name()} v{version_info["version"] or "UNKNOWN"} (build {version_info["build"] or "UNKNOWN"})'
         )
+
         if not version_info["version"] or not version_info["build"]:
             log.fatal("Could not determine dispatch version or build")
             sys.exit(1)
@@ -318,10 +309,11 @@ class BuildAssetsCommand(BaseBuildCommand):
 
     def _write_version_file(self, version_info):
         manifest = {
-            "createdAt": datetime.datetime.utcnow().isoformat() + "Z",
+            "createdAt": f"{datetime.datetime.utcnow().isoformat()}Z",
             "version": version_info["version"],
             "build": version_info["build"],
         }
+
         with open(self.get_asset_json_path(), "w") as fp:
             json.dump(manifest, fp)
         return manifest
@@ -339,7 +331,7 @@ IS_LIGHT_BUILD = os.environ.get("DISPATCH_LIGHT_BUILD") == "1"
 
 
 def get_requirements(env):
-    with open("requirements-{}.txt".format(env)) as fp:
+    with open(f"requirements-{env}.txt") as fp:
         return [x.strip() for x in fp.read().split("\n") if not x.startswith("#")]
 
 

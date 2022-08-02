@@ -98,11 +98,10 @@ def action_functions(action_id: str):
         RatingFeedbackCallbackId.submit_form: [rating_feedback_from_submitted_form],
     }
 
-    # this allows for unique action blocks e.g. invite-user or invite-user-1, etc
-    for key in action_mappings.keys():
-        if key in action_id:
-            return action_mappings[key]
-    return []
+    return next(
+        (value for key, value in action_mappings.items() if key in action_id),
+        [],
+    )
 
 
 async def handle_slack_action(*, config, client, request, background_tasks):
@@ -149,11 +148,9 @@ def block_action_functions(action: str):
         RunWorkflowBlockId.workflow_select: [update_workflow_modal],
     }
 
-    # this allows for unique action blocks e.g. invite-user or invite-user-1, etc
-    for key in action_mappings.keys():
-        if key in action:
-            return action_mappings[key]
-    return []
+    return next(
+        (value for key, value in action_mappings.items() if key in action), []
+    )
 
 
 def handle_dialog_action(
@@ -196,7 +193,6 @@ def handle_block_action(
 
         incident_id = view_data["private_metadata"].get("incident_id")
         channel_id = view_data["private_metadata"].get("channel_id")
-        action_id = action["actions"][0]["action_id"]
     else:
         try:
             button = ButtonValue.parse_raw(action["actions"][0]["value"])
@@ -206,8 +202,7 @@ def handle_block_action(
             organization_slug, incident_id = action["actions"][0]["value"].split("-")
 
         channel_id = action["channel"]["id"]
-        action_id = action["actions"][0]["action_id"]
-
+    action_id = action["actions"][0]["action_id"]
     user_id = action["user"]["id"]
     user_email = action["user"]["email"]
     for f in block_action_functions(action_id):
@@ -235,16 +230,16 @@ def add_user_to_tactical_group(
     slack_client=None,
 ):
     """Adds a user to the incident tactical group."""
-    incident = incident_service.get(db_session=db_session, incident_id=incident_id)
-    if not incident:
-        message = "Sorry, we cannot add you to this incident. It does not exist."
-        dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
-    else:
+    if incident := incident_service.get(
+        db_session=db_session, incident_id=incident_id
+    ):
         incident_flows.add_participant_to_tactical_group(
             user_email=user_email, incident=incident, db_session=db_session
         )
         message = f"Success! We've subscribed you to incident {incident.name}. You will receive all tactical reports about this incident."
-        dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
+    else:
+        message = "Sorry, we cannot add you to this incident. It does not exist."
+    dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
 
 
 @slack_background_task
@@ -262,16 +257,15 @@ def add_user_to_conversation(
     incident = incident_service.get(db_session=db_session, incident_id=incident_id)
     if not incident:
         message = "Sorry, we cannot add you to this incident. It does not exist."
-        dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
     elif incident.status == IncidentStatus.closed:
         message = f"Sorry, we cannot add you to a closed incident. Please, reach out to the incident commander ({incident.commander.individual.name}) for details."
-        dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
     else:
         dispatch_slack_service.add_users_to_conversation(
             slack_client, incident.conversation.channel_id, [user_id]
         )
         message = f"Success! We've added you to incident {incident.name}. Please, check your sidebar for the new incident channel."
-        dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
+
+    dispatch_slack_service.send_ephemeral_message(slack_client, channel_id, user_id, message)
 
 
 @slack_background_task
@@ -356,10 +350,7 @@ def update_task_status(
     """Updates a task based on user input."""
     button = TaskButton.parse_raw(action["actions"][0]["value"])
 
-    resolve = True
-    if button.action_type == "reopen":
-        resolve = False
-
+    resolve = button.action_type != "reopen"
     # we only update the external task allowing syncing to care of propagation to dispatch
     task = task_service.get_by_resource_id(db_session=db_session, resource_id=button.resource_id)
 
@@ -540,8 +531,6 @@ def dialog_action_functions(config: SlackConfiguration, action: str):
         config.slack_command_report_tactical: [handle_tactical_report_create],
     }
 
-    # this allows for unique action blocks e.g. invite-user or invite-user-1, etc
-    for key in action_mappings.keys():
-        if key in action:
-            return action_mappings[key]
-    return []
+    return next(
+        (value for key, value in action_mappings.items() if key in action), []
+    )

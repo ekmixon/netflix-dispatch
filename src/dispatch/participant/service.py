@@ -91,10 +91,11 @@ def get_or_create(
         )
 
         individual_info = {}
-        contact_plugin = plugin_service.get_active_instance(
-            db_session=db_session, project_id=incident.project.id, plugin_type="contact"
-        )
-        if contact_plugin:
+        if contact_plugin := plugin_service.get_active_instance(
+            db_session=db_session,
+            project_id=incident.project.id,
+            plugin_type="contact",
+        ):
             individual_info = contact_plugin.instance.get(
                 individual_contact.email, db_session=db_session
             )
@@ -124,9 +125,9 @@ def get_or_create(
             )
 
         if not participant.service:
-            # we only associate the service with the participant once to prevent overwrites
-            service = service_service.get(db_session=db_session, service_id=service_id)
-            if service:
+            if service := service_service.get(
+                db_session=db_session, service_id=service_id
+            ):
                 participant.service_id = service_id
                 participant.service = service
 

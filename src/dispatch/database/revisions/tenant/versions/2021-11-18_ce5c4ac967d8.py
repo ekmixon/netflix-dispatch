@@ -105,9 +105,9 @@ class Incident(Base):
 def get_current_participant(participants, role):
     participant_roles = []
     for p in participants:
-        for pr in p.participant_roles:
-            if pr.role == role.value:
-                participant_roles.append(pr)
+        participant_roles.extend(
+            pr for pr in p.participant_roles if pr.role == role.value
+        )
 
     if participant_roles:
         return sorted(participant_roles, key=lambda pr: pr.assumed_at)[-1].participant
@@ -121,9 +121,8 @@ def get_current_document(documents, resource_type):
 
 def get_current_group(groups, resource_type):
     for g in groups:
-        if g.resource_type:
-            if g.resource_type.endswith(resource_type):
-                return g
+        if g.resource_type and g.resource_type.endswith(resource_type):
+            return g
 
 
 def upgrade():
@@ -159,9 +158,7 @@ def upgrade():
 
     for incident in incidents:
         # we set the total cost
-        cost = 0
-        for c in incident.incident_costs:
-            cost += c.amount
+        cost = sum(c.amount for c in incident.incident_costs)
         incident.total_cost = cost
 
         # we set the participants team, and participants, commanders, and reporters location
@@ -172,44 +169,46 @@ def upgrade():
             p.location for p in incident.participants
         ).most_common(1)[0][0]
 
-        commander = get_current_participant(
+        if commander := get_current_participant(
             incident.participants, ParticipantRoleType.incident_commander
-        )
-        if commander:
+        ):
             incident.commander_id = commander.id
             incident.commanders_location = commander.location
 
-        reporter = get_current_participant(incident.participants, ParticipantRoleType.reporter)
-        if reporter:
+        if reporter := get_current_participant(
+            incident.participants, ParticipantRoleType.reporter
+        ):
             incident.reporter_id = reporter.id
             incident.reporters_location = reporter.location
 
-        liaison = get_current_participant(incident.participants, ParticipantRoleType.liaison)
-        if liaison:
+        if liaison := get_current_participant(
+            incident.participants, ParticipantRoleType.liaison
+        ):
             incident.liaison_id = liaison.id
 
-        scribe = get_current_participant(incident.participants, ParticipantRoleType.scribe)
-        if scribe:
+        if scribe := get_current_participant(
+            incident.participants, ParticipantRoleType.scribe
+        ):
             incident.scribe_id = scribe.id
 
-        # we set the incident document and post-incident review document foreign keys
-        incident_document = get_current_document(incident.documents, DocumentResourceTypes.incident)
-        if incident_document:
+        if incident_document := get_current_document(
+            incident.documents, DocumentResourceTypes.incident
+        ):
             incident.incident_document_id = incident_document.id
 
-        incident_review_document = get_current_document(
+        if incident_review_document := get_current_document(
             incident.documents, DocumentResourceTypes.review
-        )
-        if incident_review_document:
+        ):
             incident.incident_review_document_id = incident_review_document.id
 
-        # we set the tactical and notifications foreign keys
-        tactical_group = get_current_group(incident.groups, "tactical-group")
-        if tactical_group:
+        if tactical_group := get_current_group(
+            incident.groups, "tactical-group"
+        ):
             incident.tactical_group_id = tactical_group.id
 
-        notifications_group = get_current_group(incident.groups, "notifications-group")
-        if notifications_group:
+        if notifications_group := get_current_group(
+            incident.groups, "notifications-group"
+        ):
             incident.notifications_group_id = notifications_group.id
 
     session.commit()

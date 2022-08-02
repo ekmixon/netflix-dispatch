@@ -29,9 +29,9 @@ def daily_report(db_session: SessionLocal, project: Project):
     Fetches all incident feedback provided in the last 24 hours
     and sends a daily report to the commanders who handled the incidents.
     """
-    feedback = get_all_last_x_hours_by_project_id(db_session=db_session, project_id=project.id)
-
-    if feedback:
+    if feedback := get_all_last_x_hours_by_project_id(
+        db_session=db_session, project_id=project.id
+    ):
         grouped_feedback = group_feedback_by_commander(feedback)
         for commander_email, feedback in grouped_feedback.items():
             send_incident_feedback_daily_report(commander_email, feedback, project.id, db_session)

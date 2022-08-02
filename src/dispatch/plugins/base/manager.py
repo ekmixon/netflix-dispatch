@@ -18,11 +18,11 @@ class PluginManager(InstanceManager):
         return iter(self.all())
 
     def __len__(self):
-        return sum(1 for i in self.all())
+        return sum(1 for _ in self.all())
 
     def all(self, version=1, plugin_type=None):
         for plugin in sorted(super(PluginManager, self).all(), key=lambda x: x.get_title()):
-            if not plugin.type == plugin_type and plugin_type:
+            if plugin.type != plugin_type and plugin_type:
                 continue
             if version is not None and plugin.__version__ != version:
                 continue

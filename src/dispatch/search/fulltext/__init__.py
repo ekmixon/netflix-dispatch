@@ -172,7 +172,7 @@ class CreateSearchTriggerSQL(SQLConstruct):
         if self.options["weights"] or any(
             getattr(self.table.c, column) in vectorizer for column in self.indexed_columns
         ):
-            return self.schema_name + "." + self.search_function_name + "()"
+            return f"{self.schema_name}.{self.search_function_name}()"
         return "tsvector_update_trigger({arguments})".format(
             arguments=", ".join(
                 [self.tsvector_column.name, "'%s'" % self.options["regconfig"]]
@@ -195,15 +195,12 @@ class CreateSearchTriggerSQL(SQLConstruct):
 
 class DropSearchFunctionSQL(SQLConstruct):
     def __str__(self):
-        return "DROP FUNCTION IF EXISTS %s.%s()" % (self.schema_name, self.search_function_name)
+        return f"DROP FUNCTION IF EXISTS {self.schema_name}.{self.search_function_name}()"
 
 
 class DropSearchTriggerSQL(SQLConstruct):
     def __str__(self):
-        return "DROP TRIGGER IF EXISTS %s ON %s" % (
-            self.search_trigger_name,
-            self.table_name,
-        )
+        return f"DROP TRIGGER IF EXISTS {self.search_trigger_name} ON {self.table_name}"
 
 
 class SearchManager:

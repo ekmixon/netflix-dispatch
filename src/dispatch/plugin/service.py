@@ -125,34 +125,34 @@ def update_instance(
     plugin_instance_data = plugin_instance.dict()
     update_data = plugin_instance_in.dict(skip_defaults=True)
 
-    if plugin_instance_in.enabled:  # user wants to enable the plugin
-        if not plugin_instance.plugin.multiple:
-            # we can't have multiple plugins of this type disable the currently enabled one
-            enabled_plugin_instances = get_enabled_instances_by_type(
-                db_session=db_session,
-                project_id=plugin_instance.project_id,
-                plugin_type=plugin_instance.plugin.type,
-            )
-            if enabled_plugin_instances:
-                enabled_plugin_instances[0].enabled = False
+    if plugin_instance_in.enabled and not plugin_instance.plugin.multiple:
+        if enabled_plugin_instances := get_enabled_instances_by_type(
+            db_session=db_session,
+            project_id=plugin_instance.project_id,
+            plugin_type=plugin_instance.plugin.type,
+        ):
+            enabled_plugin_instances[0].enabled = False
 
-    if not plugin_instance_in.enabled:  # user wants to disable the plugin
-        if plugin_instance.plugin.type == OncallPlugin.type:
-            oncall_services = service_service.get_all_by_type_and_status(
-                db_session=db_session, service_type=plugin_instance.plugin.slug, is_active=True
+    if (
+        not plugin_instance_in.enabled
+        and plugin_instance.plugin.type == OncallPlugin.type
+    ):
+        if oncall_services := service_service.get_all_by_type_and_status(
+            db_session=db_session,
+            service_type=plugin_instance.plugin.slug,
+            is_active=True,
+        ):
+            raise ValidationError(
+                [
+                    ErrorWrapper(
+                        InvalidConfigurationError(
+                            msg=f"Cannot disable plugin instance: {plugin_instance.plugin.title}. One or more oncall services depend on it. "
+                        ),
+                        loc="plugin_instance",
+                    )
+                ],
+                model=PluginInstanceUpdate,
             )
-            if oncall_services:
-                raise ValidationError(
-                    [
-                        ErrorWrapper(
-                            InvalidConfigurationError(
-                                msg=f"Cannot disable plugin instance: {plugin_instance.plugin.title}. One or more oncall services depend on it. "
-                            ),
-                            loc="plugin_instance",
-                        )
-                    ],
-                    model=PluginInstanceUpdate,
-                )
 
     for field in plugin_instance_data:
         if field in update_data:

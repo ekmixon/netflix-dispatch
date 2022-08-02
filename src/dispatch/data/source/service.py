@@ -34,9 +34,11 @@ def get_by_name(*, db_session, project_id: int, name: str) -> Optional[Source]:
 
 def get_by_name_or_raise(*, db_session, project_id, source_in: SourceRead) -> SourceRead:
     """Returns the source specified or raises ValidationError."""
-    source = get_by_name(db_session=db_session, project_id=project_id, name=source_in.name)
-
-    if not source:
+    if source := get_by_name(
+        db_session=db_session, project_id=project_id, name=source_in.name
+    ):
+        return source
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -49,8 +51,6 @@ def get_by_name_or_raise(*, db_session, project_id, source_in: SourceRead) -> So
             ],
             model=SourceRead,
         )
-
-    return source
 
 
 def get_all(*, db_session, project_id: int) -> List[Optional[Source]]:
@@ -87,29 +87,31 @@ def create(*, db_session, source_in: SourceCreate) -> Source:
             db_session=db_session, project_id=project.id, service_in=source_in.owner
         )
 
-    tags = []
-    for t in source_in.tags:
-        tags.append(
-            tag_service.get_by_name_or_raise(db_session=db_session, tag_in=t, project_id=project.id)
+    tags = [
+        tag_service.get_by_name_or_raise(
+            db_session=db_session, tag_in=t, project_id=project.id
         )
+        for t in source_in.tags
+    ]
+
     source.tags = tags
 
-    incidents = []
-    for i in source_in.incidents:
-        incidents.append(
-            incident_service.get_by_name_or_raise(
-                db_session=db_session, incident_in=i, project_id=project.id
-            )
+    incidents = [
+        incident_service.get_by_name_or_raise(
+            db_session=db_session, incident_in=i, project_id=project.id
         )
+        for i in source_in.incidents
+    ]
+
     source.incidents = incidents
 
-    queries = []
-    for q in source_in.queries:
-        queries.append(
-            query_service.get_by_name_or_raise(
-                db_session=db_session, query_in=q, project_id=project.id
-            )
+    queries = [
+        query_service.get_by_name_or_raise(
+            db_session=db_session, query_in=q, project_id=project.id
         )
+        for q in source_in.queries
+    ]
+
     source.queries = queries
 
     if source_in.source_environment:
@@ -160,8 +162,7 @@ def get_or_create(*, db_session, source_in: SourceCreate) -> Source:
     else:
         q = db_session.query(Source).filter_by(name=source_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, source_in=source_in)
@@ -192,32 +193,31 @@ def update(*, db_session, source: Source, source_in: SourceUpdate) -> Source:
             db_session=db_session, project_id=source.project.id, service_in=source_in.owner
         )
 
-    tags = []
-    for t in source_in.tags:
-        tags.append(
-            tag_service.get_by_name_or_raise(
-                db_session=db_session, tag_in=t, project_id=source.project.id
-            )
+    tags = [
+        tag_service.get_by_name_or_raise(
+            db_session=db_session, tag_in=t, project_id=source.project.id
         )
+        for t in source_in.tags
+    ]
 
     source.tags = tags
 
-    incidents = []
-    for i in source_in.incidents:
-        incidents.append(
-            incident_service.get_by_name_or_raise(
-                db_session=db_session, incident_in=i, project_id=source.project.id
-            )
+    incidents = [
+        incident_service.get_by_name_or_raise(
+            db_session=db_session, incident_in=i, project_id=source.project.id
         )
+        for i in source_in.incidents
+    ]
+
     source.incidents = incidents
 
-    queries = []
-    for q in source_in.queries:
-        queries.append(
-            query_service.get_by_name_or_raise(
-                db_session=db_session, query_in=q, project_id=source.project.id
-            )
+    queries = [
+        query_service.get_by_name_or_raise(
+            db_session=db_session, query_in=q, project_id=source.project.id
         )
+        for q in source_in.queries
+    ]
+
     source.queries = queries
 
     if source_in.source_environment:

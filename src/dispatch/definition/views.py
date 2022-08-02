@@ -27,13 +27,13 @@ def get_definitions(*, common: dict = Depends(common_parameters)):
 @router.get("/{definition_id}", response_model=DefinitionRead)
 def get_definition(*, db_session: Session = Depends(get_db), definition_id: PrimaryKey):
     """Update a definition."""
-    definition = get(db_session=db_session, definition_id=definition_id)
-    if not definition:
+    if definition := get(db_session=db_session, definition_id=definition_id):
+        return definition
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The definition with this id does not exist."}],
         )
-    return definition
 
 
 @router.post("", response_model=DefinitionRead)
@@ -75,10 +75,10 @@ def update_definition(
 @router.delete("/{definition_id}")
 def delete_definition(*, db_session: Session = Depends(get_db), definition_id: PrimaryKey):
     """Delete a definition."""
-    definition = get(db_session=db_session, definition_id=definition_id)
-    if not definition:
+    if definition := get(db_session=db_session, definition_id=definition_id):
+        delete(db_session=db_session, definition_id=definition_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The definition with this id does not exist."}],
         )
-    delete(db_session=db_session, definition_id=definition_id)

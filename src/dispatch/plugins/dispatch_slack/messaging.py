@@ -215,8 +215,7 @@ def format_default_text(item: dict):
 
 def default_notification(items: list):
     """Creates blocks for a default notification."""
-    blocks = []
-    blocks.append({"type": "divider"})
+    blocks = [{"type": "divider"}]
     for item in items:
         if isinstance(item, list):  # handle case where we are passing multiple grouped items
             blocks += default_notification(item)
@@ -229,17 +228,15 @@ def default_notification(items: list):
                 "type": item["type"],
             }
             if item["type"] == "context":
-                block.update({"elements": [{"type": "mrkdwn", "text": format_default_text(item)}]})
+                block["elements"] = [{"type": "mrkdwn", "text": format_default_text(item)}]
             else:
-                block.update({"text": {"type": "plain_text", "text": format_default_text(item)}})
-            blocks.append(block)
+                block["text"] = {"type": "plain_text", "text": format_default_text(item)}
         else:
             block = {
                 "type": "section",
                 "text": {"type": "mrkdwn", "text": format_default_text(item)},
             }
-            blocks.append(block)
-
+        blocks.append(block)
         if item.get("buttons"):
             block = {"type": "actions", "elements": []}
             for button in item["buttons"]:
@@ -281,12 +278,11 @@ def create_message_blocks(
         blocks += template_func(rendered_items)
 
     blocks_grouped = []
-    if items:
-        if items[0].get("items_grouped"):
-            for item in items[0]["items_grouped"]:
-                rendered_items_grouped = render_message_template(
-                    items[0]["items_grouped_template"], **item
-                )
-                blocks_grouped += template_func(rendered_items_grouped)
+    if items and items[0].get("items_grouped"):
+        for item in items[0]["items_grouped"]:
+            rendered_items_grouped = render_message_template(
+                items[0]["items_grouped_template"], **item
+            )
+            blocks_grouped += template_func(rendered_items_grouped)
 
     return blocks + blocks_grouped

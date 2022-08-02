@@ -54,9 +54,7 @@ def auto_tagger(db_session: SessionLocal, project: Project):
 
         log.debug(f"Processing incident. Name: {incident.name}")
 
-        doc = incident.incident_document
-
-        if doc:
+        if doc := incident.incident_document:
             try:
                 mime_type = "text/plain"
                 text = plugin.instance.get(doc.resource_id, mime_type)
@@ -111,12 +109,11 @@ def daily_report(db_session: SessionLocal, project: Project):
     for incident in incidents:
         for notification in notifications:
             for search_filter in notification.filters:
-                match = search_filter_service.match(
+                if match := search_filter_service.match(
                     db_session=db_session,
                     filter_spec=search_filter.expression,
                     class_instance=incident,
-                )
-                if match:
+                ):
                     incidents_notification_filters_mapping[notification.id][
                         search_filter.id
                     ].append(incident)
@@ -205,6 +202,5 @@ def close_incident_reminder(db_session: SessionLocal, project: Project):
     for incident in incidents:
         span = datetime.utcnow() - incident.stable_at
         q, r = divmod(span.days, 7)  # only for incidents that have been stable longer than a week
-        if q >= 1 and r == 0:
-            if date.today().isoweekday() == 1:  # lets only send on mondays
-                send_incident_close_reminder(incident, db_session)
+        if q >= 1 and r == 0 and date.today().isoweekday() == 1:
+            send_incident_close_reminder(incident, db_session)

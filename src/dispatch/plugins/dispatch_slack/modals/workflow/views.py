@@ -56,9 +56,8 @@ def run_workflow_view(
 
         workflow_options.append(current_option)
 
-        if selected_workflow:
-            if w.id == selected_workflow.id:
-                selected_option = current_option
+        if selected_workflow and w.id == selected_workflow.id:
+            selected_option = current_option
 
     if selected_workflow:
         select_block = {

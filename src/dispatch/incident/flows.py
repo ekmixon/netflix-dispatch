@@ -71,10 +71,11 @@ def get_incident_participants(incident: Incident, db_session: SessionLocal):
     team_contacts = []
 
     if incident.visibility == Visibility.open:
-        plugin = plugin_service.get_active_instance(
-            db_session=db_session, project_id=incident.project.id, plugin_type="participant"
-        )
-        if plugin:
+        if plugin := plugin_service.get_active_instance(
+            db_session=db_session,
+            project_id=incident.project.id,
+            plugin_type="participant",
+        ):
             individual_contacts, team_contacts = plugin.instance.get(
                 incident,
                 db_session=db_session,
@@ -184,10 +185,7 @@ def update_external_incident_ticket(
         incident_type_in=incident.incident_type,
     ).get_meta(plugin.plugin.slug)
 
-    total_cost = 0
-    if incident.total_cost:
-        total_cost = incident.total_cost
-
+    total_cost = incident.total_cost or 0
     plugin.instance.update(
         incident.ticket.resource_id,
         title,
@@ -302,12 +300,11 @@ def create_incident_documents(incident: Incident, db_session: SessionLocal):
     if not incident.storage:
         return incident_documents
 
-    # we get the storage plugin
-    plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=incident.project.id, plugin_type="storage"
-    )
-
-    if plugin:
+    if plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=incident.project.id,
+        plugin_type="storage",
+    ):
         incident_document_name = f"{incident.name} - Incident Document"
 
         if incident.incident_type.incident_template_document:
@@ -534,11 +531,11 @@ def add_participants_to_conversation(
     participant_emails: List[str], incident: Incident, db_session: SessionLocal
 ):
     """Adds one or more participants to the conversation."""
-    plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=incident.project.id, plugin_type="conversation"
-    )
-
-    if plugin:
+    if plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=incident.project.id,
+        plugin_type="conversation",
+    ):
         try:
             plugin.instance.add(incident.conversation.channel_id, participant_emails)
         except Exception as e:
@@ -555,17 +552,16 @@ def add_participant_to_tactical_group(
     user_email: str, incident: Incident, db_session: SessionLocal
 ):
     """Adds participant to the tactical group."""
-    # we get the tactical group
-    plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=incident.project.id, plugin_type="participant-group"
-    )
-    if plugin:
-        tactical_group = group_service.get_by_incident_id_and_resource_type(
+    if plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=incident.project.id,
+        plugin_type="participant-group",
+    ):
+        if tactical_group := group_service.get_by_incident_id_and_resource_type(
             db_session=db_session,
             incident_id=incident.id,
             resource_type=f"{plugin.plugin.slug}-tactical-group",
-        )
-        if tactical_group:
+        ):
             plugin.instance.add(tactical_group.email, [user_email])
 
 
@@ -573,17 +569,16 @@ def remove_participant_from_tactical_group(
     user_email: str, incident: Incident, db_session: SessionLocal
 ):
     """Removes participant from the tactical group."""
-    # we get the tactical group
-    plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=incident.project.id, plugin_type="participant-group"
-    )
-    if plugin:
-        tactical_group = group_service.get_by_incident_id_and_resource_type(
+    if plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=incident.project.id,
+        plugin_type="participant-group",
+    ):
+        if tactical_group := group_service.get_by_incident_id_and_resource_type(
             db_session=db_session,
             incident_id=incident.id,
             resource_type=f"{plugin.plugin.slug}-tactical-group",
-        )
-        if tactical_group:
+        ):
             plugin.instance.remove(tactical_group.email, [user_email])
 
 
@@ -612,8 +607,7 @@ def incident_create_closed_flow(
     # we set the stable and close times to the reported time
     incident.stable_at = incident.closed_at = incident.reported_at
 
-    ticket = create_incident_ticket(incident, db_session)
-    if ticket:
+    if ticket := create_incident_ticket(incident, db_session):
         incident.ticket = ticket_service.create(
             db_session=db_session, ticket_in=TicketCreate(**ticket)
         )

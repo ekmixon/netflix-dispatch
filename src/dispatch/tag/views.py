@@ -26,20 +26,19 @@ def get_tags(*, common: dict = Depends(common_parameters)):
 @router.get("/{tag_id}", response_model=TagRead)
 def get_tag(*, db_session: Session = Depends(get_db), tag_id: PrimaryKey):
     """Given its unique ID, retrieve details about a single tag."""
-    tag = get(db_session=db_session, tag_id=tag_id)
-    if not tag:
+    if tag := get(db_session=db_session, tag_id=tag_id):
+        return tag
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The requested tag does not exist."}],
         )
-    return tag
 
 
 @router.post("", response_model=TagRead)
 def create_tag(*, db_session: Session = Depends(get_db), tag_in: TagCreate):
     """Create a new tag."""
-    tag = create(db_session=db_session, tag_in=tag_in)
-    return tag
+    return create(db_session=db_session, tag_in=tag_in)
 
 
 @router.put("/{tag_id}", response_model=TagRead)
@@ -58,13 +57,13 @@ def update_tag(*, db_session: Session = Depends(get_db), tag_id: PrimaryKey, tag
 @router.delete("/{tag_id}")
 def delete_tag(*, db_session: Session = Depends(get_db), tag_id: PrimaryKey):
     """Delete a tag, returning only an HTTP 200 OK if successful."""
-    tag = get(db_session=db_session, tag_id=tag_id)
-    if not tag:
+    if tag := get(db_session=db_session, tag_id=tag_id):
+        delete(db_session=db_session, tag_id=tag_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An tag with this ID does not exist."}],
         )
-    delete(db_session=db_session, tag_id=tag_id)
 
 
 @router.get("/recommendations/{model_name}/{id}", response_model=TagPagination)

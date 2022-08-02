@@ -55,8 +55,7 @@ class CustomBase:
 
     @property
     def _id_str(self):
-        ids = inspect(self).identity
-        if ids:
+        if ids := inspect(self).identity:
             return "-".join([str(x) for x in ids]) if len(ids) > 1 else str(ids[0])
         else:
             return "None"
@@ -70,31 +69,27 @@ class CustomBase:
         for key in self.__repr_attrs__:
             if not hasattr(self, key):
                 raise KeyError(
-                    "{} has incorrect attribute '{}' in "
-                    "__repr__attrs__".format(self.__class__, key)
+                    f"{self.__class__} has incorrect attribute '{key}' in __repr__attrs__"
                 )
+
             value = getattr(self, key)
             wrap_in_quote = isinstance(value, str)
 
             value = str(value)
             if len(value) > max_length:
-                value = value[:max_length] + "..."
+                value = f"{value[:max_length]}..."
 
             if wrap_in_quote:
-                value = "'{}'".format(value)
-            values.append(value if single else "{}:{}".format(key, value))
+                value = f"'{value}'"
+            values.append(value if single else f"{key}:{value}")
 
         return " ".join(values)
 
     def __repr__(self):
         # get id like '#123'
-        id_str = ("#" + self._id_str) if self._id_str else ""
+        id_str = f"#{self._id_str}" if self._id_str else ""
         # join class name, id and repr_attrs
-        return "<{} {}{}>".format(
-            self.__class__.__name__,
-            id_str,
-            " " + self._repr_attrs_str if self._repr_attrs_str else "",
-        )
+        return f'<{self.__class__.__name__} {id_str}{f" {self._repr_attrs_str}" if self._repr_attrs_str else ""}>'
 
 
 Base = declarative_base(cls=CustomBase)
@@ -115,9 +110,11 @@ def get_class_by_tablename(table_fullname: str) -> Any:
 
     def _find_class(name):
         for c in Base._decl_class_registry.values():
-            if hasattr(c, "__table__"):
-                if c.__table__.fullname.lower() == name.lower():
-                    return c
+            if (
+                hasattr(c, "__table__")
+                and c.__table__.fullname.lower() == name.lower()
+            ):
+                return c
 
     mapped_name = resolve_table_name(table_fullname)
     mapped_class = _find_class(mapped_name)
@@ -154,13 +151,12 @@ def ensure_unique_default_per_project(target, value, oldvalue, initiator):
     mapped_cls = get_mapper(target)
 
     if value:
-        previous_default = (
+        if previous_default := (
             session.query(mapped_cls)
             .filter(mapped_cls.columns.default == true())
             .filter(mapped_cls.columns.project_id == target.project_id)
             .one_or_none()
-        )
-        if previous_default:
+        ):
             # we want exclude updating the current default
             if previous_default.id != target.id:
                 previous_default.default = False

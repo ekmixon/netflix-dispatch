@@ -59,11 +59,11 @@ def create_multi_message_body(
     """Creates a multi message message body based on message type."""
     template, description = get_template(message_type)
 
-    master_map = []
-    for item in items:
-        master_map.append(render_message_template(message_template, **item))
+    master_map = [
+        render_message_template(message_template, **item) for item in items
+    ]
 
-    kwargs.update({"items": master_map, "description": description})
+    kwargs |= {"items": master_map, "description": description}
     return render_html(template.render(**kwargs))
 
 
@@ -78,11 +78,11 @@ def create_message_body(message_template: dict, message_type: MessageType, **kwa
             item_rendered = render_message_template(items_grouped_template, **item)
             items_grouped_rendered.append(item_rendered)
 
-        kwargs.update({"items": items_grouped_rendered, "description": description})
+        kwargs |= {"items": items_grouped_rendered, "description": description}
         return render_html(template.render(**kwargs))
 
     items_rendered = render_message_template(message_template, **kwargs)
-    kwargs.update({"items": items_rendered, "description": description})
+    kwargs |= {"items": items_rendered, "description": description}
     return render_html(template.render(**kwargs))
 
 

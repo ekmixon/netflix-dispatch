@@ -203,25 +203,25 @@ def update(*, db_session, user: DispatchUser, user_in: UserUpdate) -> DispatchUs
         user.password = password
 
     if user_in.organizations:
-        roles = []
-
-        for role in user_in.organizations:
-            roles.append(
-                create_or_update_organization_role(db_session=db_session, user=user, role_in=role)
+        roles = [
+            create_or_update_organization_role(
+                db_session=db_session, user=user, role_in=role
             )
+            for role in user_in.organizations
+        ]
+
 
     if user_in.projects:
         # we reset the default value for all user projects
         for user_project in user.projects:
             user_project.default = False
 
-        projects = []
-        for user_project in user_in.projects:
-            projects.append(
-                create_or_update_project_default(
-                    db_session=db_session, user=user, user_project_in=user_project
-                )
+        projects = [
+            create_or_update_project_default(
+                db_session=db_session, user=user, user_project_in=user_project
             )
+            for user_project in user_in.projects
+        ]
 
     db_session.commit()
     return user

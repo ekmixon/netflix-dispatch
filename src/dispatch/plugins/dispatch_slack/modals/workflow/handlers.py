@@ -34,9 +34,7 @@ def create_run_workflow_modal(
 
     incident = incident_service.get(db_session=db_session, incident_id=incident_id)
     workflows = workflow_service.get_enabled(db_session=db_session)
-    workflows = [x for x in workflows if x.plugin_instance.enabled]
-
-    if workflows:
+    if workflows := [x for x in workflows if x.plugin_instance.enabled]:
         modal_create_template = run_workflow_view(incident=incident, workflows=workflows)
 
         open_modal_with_user(
@@ -162,7 +160,7 @@ def run_workflow_submitted_form(
         if i.startswith(RunWorkflowBlockId.param):
             key = i.split("-")[1]
             value = parsed_form_data[i]
-            params.update({key: value})
+            params[key] = value
             named_params.append({"key": key, "value": value})
 
     workflow_id = parsed_form_data.get(RunWorkflowBlockId.workflow_select)["value"]
@@ -185,9 +183,12 @@ def run_workflow_submitted_form(
             parameters=named_params,
         ),
     )
-    params.update(
-        {"incident_id": incident.id, "incident_name": incident.name, "instance_id": instance.id}
-    )
+    params |= {
+        "incident_id": incident.id,
+        "incident_name": incident.name,
+        "instance_id": instance.id,
+    }
+
 
     workflow.plugin_instance.instance.run(workflow.resource_id, params)
 

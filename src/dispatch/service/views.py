@@ -81,22 +81,22 @@ def update_service(
 @router.get("/{service_id}", response_model=ServiceRead)
 def get_service(*, db_session: Session = Depends(get_db), service_id: PrimaryKey):
     """Get a single service."""
-    service = get(db_session=db_session, service_id=service_id)
-    if not service:
+    if service := get(db_session=db_session, service_id=service_id):
+        return service
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A service with this id does not exist."}],
         )
-    return service
 
 
 @router.delete("/{service_id}")
 def delete_service(*, db_session: Session = Depends(get_db), service_id: PrimaryKey):
     """Delete a single service."""
-    service = get(db_session=db_session, service_id=service_id)
-    if not service:
+    if service := get(db_session=db_session, service_id=service_id):
+        delete(db_session=db_session, service_id=service_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A service with this id does not exist."}],
         )
-    delete(db_session=db_session, service_id=service_id)

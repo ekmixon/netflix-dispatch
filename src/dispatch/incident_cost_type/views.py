@@ -29,13 +29,15 @@ def get_incident_cost_type(
     *, db_session: Session = Depends(get_db), incident_cost_type_id: PrimaryKey
 ):
     """Get an incident cost type by its id."""
-    incident_cost_type = get(db_session=db_session, incident_cost_type_id=incident_cost_type_id)
-    if not incident_cost_type:
+    if incident_cost_type := get(
+        db_session=db_session, incident_cost_type_id=incident_cost_type_id
+    ):
+        return incident_cost_type
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An incident cost type with this id does not exist."}],
         )
-    return incident_cost_type
 
 
 @router.post(
@@ -47,8 +49,9 @@ def create_incident_cost_type(
     *, db_session: Session = Depends(get_db), incident_cost_type_in: IncidentCostTypeCreate
 ):
     """Create an incident cost type."""
-    incident_cost_type = create(db_session=db_session, incident_cost_type_in=incident_cost_type_in)
-    return incident_cost_type
+    return create(
+        db_session=db_session, incident_cost_type_in=incident_cost_type_in
+    )
 
 
 @router.put(

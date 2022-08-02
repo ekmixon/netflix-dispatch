@@ -95,8 +95,7 @@ def get_or_create(*, db_session, document_in) -> Document:
     else:
         q = db_session.query(Document).filter_by(**document_in.dict())
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, document_in=document_in)
@@ -107,9 +106,8 @@ def update(*, db_session, document: Document, document_in: DocumentUpdate) -> Do
     document_data = document.dict()
 
     # we reset the last evergreeen reminder to now
-    if document_in.evergreen:
-        if not document.evergreen:
-            document_in.evergreen_last_reminder_at = datetime.utcnow()
+    if document_in.evergreen and not document.evergreen:
+        document_in.evergreen_last_reminder_at = datetime.utcnow()
 
     update_data = document_in.dict(skip_defaults=True, exclude={"filters"})
 

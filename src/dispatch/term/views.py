@@ -35,13 +35,13 @@ def create_term(*, db_session: Session = Depends(get_db), term_in: TermCreate):
 @router.get("/{term_id}", response_model=TermRead)
 def get_term(*, db_session: Session = Depends(get_db), term_id: PrimaryKey):
     """Get a term."""
-    term = get(db_session=db_session, term_id=term_id)
-    if not term:
+    if term := get(db_session=db_session, term_id=term_id):
+        return term
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The term with this id does not exist."}],
         )
-    return term
 
 
 @router.put("/{term_id}", response_model=TermRead)
@@ -60,10 +60,10 @@ def update_term(*, db_session: Session = Depends(get_db), term_id: PrimaryKey, t
 @router.delete("/{term_id}")
 def delete_term(*, db_session: Session = Depends(get_db), term_id: PrimaryKey):
     """Delete a term."""
-    term = get(db_session=db_session, term_id=term_id)
-    if not term:
+    if term := get(db_session=db_session, term_id=term_id):
+        return delete(db_session=db_session, term_id=term_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The term with this id does not exist."}],
         )
-    return delete(db_session=db_session, term_id=term_id)

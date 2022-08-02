@@ -81,14 +81,12 @@ class EventEnvelope(BaseModel):
 
 def get_channel_id_from_event(event: EventEnvelope):
     """Returns the channel id from the Slack event."""
-    channel_id = ""
-    if event.event.channel_id:
-        return event.event.channel_id
-    if event.event.channel:
-        return event.event.channel
-    if event.event.item.channel:
-        return event.event.item.channel
-    return channel_id
+    return (
+        event.event.channel_id
+        or event.event.channel
+        or event.event.item.channel
+        or ""
+    )
 
 
 def event_functions(event: EventEnvelope):
@@ -203,13 +201,9 @@ def increment_activity(
     db_session=None,
     slack_client=None,
 ):
-    # increment activity for user
-    participant = participant_service.get_by_incident_id_and_email(
+    if participant := participant_service.get_by_incident_id_and_email(
         db_session=db_session, incident_id=incident_id, email=user_email
-    )
-
-    # member join also creates a message but they aren't yet a participant
-    if participant:
+    ):
         if participant.activity:
             participant.activity += 1
         else:
@@ -428,11 +422,11 @@ def message_monitor(
                 if monitor:
                     continue
 
-                current_status = p.instance.get_match_status(match_data)
-                if current_status:
-                    status_text = ""
-                    for k, v in current_status.items():
-                        status_text += f"*{k.title()}*:\n{v.title()}\n"
+                if current_status := p.instance.get_match_status(match_data):
+                    status_text = "".join(
+                        f"*{k.title()}*:\n{v.title()}\n"
+                        for k, v in current_status.items()
+                    )
 
                     monitor_button = MonitorButton(
                         incident_id=incident.id,

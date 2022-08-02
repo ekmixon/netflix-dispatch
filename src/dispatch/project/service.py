@@ -21,9 +21,9 @@ def get_default(*, db_session) -> Optional[Project]:
 
 def get_default_or_raise(*, db_session) -> Project:
     """Returns the default project or raise a ValidationError if one doesn't exist."""
-    project = get_default(db_session=db_session)
-
-    if not project:
+    if project := get_default(db_session=db_session):
+        return project
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -33,7 +33,6 @@ def get_default_or_raise(*, db_session) -> Project:
             ],
             model=ProjectRead,
         )
-    return project
 
 
 def get_by_name(*, db_session, name: str) -> Optional[Project]:
@@ -43,9 +42,9 @@ def get_by_name(*, db_session, name: str) -> Optional[Project]:
 
 def get_by_name_or_raise(*, db_session, project_in=ProjectRead) -> Project:
     """Returns the project specified or raises ValidationError."""
-    project = get_by_name(db_session=db_session, name=project_in.name)
-
-    if not project:
+    if project := get_by_name(db_session=db_session, name=project_in.name):
+        return project
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -55,8 +54,6 @@ def get_by_name_or_raise(*, db_session, project_in=ProjectRead) -> Project:
             ],
             model=ProjectRead,
         )
-
-    return project
 
 
 def get_by_name_or_default(*, db_session, project_in=ProjectRead) -> Project:
@@ -95,8 +92,7 @@ def get_or_create(*, db_session, project_in: ProjectCreate) -> Project:
     else:
         q = db_session.query(Project).filter_by(**project_in.dict(exclude={"id", "organization"}))
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, project_in=project_in)

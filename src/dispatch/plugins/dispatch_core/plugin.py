@@ -120,7 +120,7 @@ class PKCEAuthProviderPlugin(AuthenticationProviderPlugin):
             else:
                 data = jwt.decode(token, key, options=jwt_opts)
         except JWTError as err:
-            log.debug("JWT Decode error: {}".format(err))
+            log.debug(f"JWT Decode error: {err}")
             raise credentials_exception
 
         # Support overriding where email is returned in the id token
@@ -265,13 +265,11 @@ class DispatchParticipantResolverPlugin(ParticipantPlugin):
 
             # we need to do more work when we have a service
             if match.resource_type == Service.__name__:
-                plugin_instance = plugin_service.get_active_instance_by_slug(
+                if plugin_instance := plugin_service.get_active_instance_by_slug(
                     db_session=db_session,
                     slug=match.resource_state["type"],
                     project_id=incident.project.id,
-                )
-
-                if plugin_instance:
+                ):
                     if plugin_instance.enabled:
                         log.debug(
                             f"Resolving service contact. ServiceContact: {match.resource_state}"

@@ -58,9 +58,8 @@ frontend = FastAPI()
 @frontend.middleware("http")
 async def default_page(request, call_next):
     response = await call_next(request)
-    if response.status_code == 404:
-        if STATIC_DIR:
-            return FileResponse(path.join(STATIC_DIR, "index.html"))
+    if response.status_code == 404 and STATIC_DIR:
+        return FileResponse(path.join(STATIC_DIR, "index.html"))
     return response
 
 
@@ -80,8 +79,7 @@ def get_path_params_from_request(request: Request) -> str:
     for r in api_router.routes:
         path_regex, path_format, param_converters = compile_path(r.path)
         path = request["path"].removeprefix("/api/v1")  # remove the /api/v1 for matching
-        match = path_regex.match(path)
-        if match:
+        if match := path_regex.match(path):
             path_params = match.groupdict()
     return path_params
 
@@ -109,9 +107,7 @@ async def db_session_middleware(request: Request, call_next):
     ctx_token = _request_id_ctx_var.set(request_id)
     path_params = get_path_params_from_request(request)
 
-    # if this call is organization specific set the correct search path
-    organization_slug = path_params.get("organization")
-    if organization_slug:
+    if organization_slug := path_params.get("organization"):
         request.state.organization = organization_slug
         schema = f"dispatch_organization_{organization_slug}"
         # validate slug exists
@@ -172,7 +168,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             metric_provider.counter("server.call.exception.counter", tags=tags)
             raise e from None
         else:
-            tags.update({"status_code": response.status_code})
+            tags["status_code"] = response.status_code
             metric_provider.timer("server.call.elapsed", value=elapsed_time, tags=tags)
             metric_provider.counter("server.call.counter", tags=tags)
 

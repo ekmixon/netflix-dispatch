@@ -31,7 +31,7 @@ def generate_password():
     """Generates a reasonable password if none is provided."""
     alphanumeric = string.ascii_letters + string.digits
     while True:
-        password = "".join(secrets.choice(alphanumeric) for i in range(10))
+        password = "".join(secrets.choice(alphanumeric) for _ in range(10))
         if (
             any(c.islower() for c in password)
             and any(c.isupper() for c in password)  # noqa

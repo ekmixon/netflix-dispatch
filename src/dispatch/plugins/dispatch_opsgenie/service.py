@@ -18,12 +18,10 @@ def get_oncall(api_key: str, team_id: str) -> str:
     if response.status_code != 200:
         raise DispatchPluginException(response.text)
 
-    body = response.json().get("data")
-
-    if not body:
+    if body := response.json().get("data"):
+        return body["onCallParticipants"][0].get("name")
+    else:
         raise DispatchPluginException
-
-    return body["onCallParticipants"][0].get("name")
 
 
 def page_oncall(

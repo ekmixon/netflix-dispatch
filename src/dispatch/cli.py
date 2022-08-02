@@ -38,18 +38,17 @@ def list_plugins():
     from dispatch.plugin import service as plugin_service
 
     db_session = SessionLocal()
-    table = []
-    for record in plugin_service.get_all(db_session=db_session):
-        table.append(
-            [
-                record.title,
-                record.slug,
-                record.version,
-                record.type,
-                record.author,
-                record.description,
-            ]
-        )
+    table = [
+        [
+            record.title,
+            record.slug,
+            record.version,
+            record.type,
+            record.author,
+            record.description,
+        ]
+        for record in plugin_service.get_all(db_session=db_session)
+    ]
 
     click.secho(
         tabulate(
@@ -619,9 +618,10 @@ def list_tasks():
     """Prints and runs all currently configured periodic tasks, in seperate event loop."""
     from tabulate import tabulate
 
-    table = []
-    for task in scheduler.registered_tasks:
-        table.append([task["name"], task["job"].period, task["job"].at_time])
+    table = [
+        [task["name"], task["job"].period, task["job"].at_time]
+        for task in scheduler.registered_tasks
+    ]
 
     click.secho(tabulate(table, headers=["Task Name", "Period", "At Time"]), fg="blue")
 
@@ -666,10 +666,7 @@ def show_routes():
     from tabulate import tabulate
     from dispatch.main import api_router
 
-    table = []
-    for r in api_router.routes:
-        table.append([r.path, ",".join(r.methods)])
-
+    table = [[r.path, ",".join(r.methods)] for r in api_router.routes]
     click.secho(tabulate(table, headers=["Path", "Authenticated", "Methods"]), fg="blue")
 
 
@@ -683,11 +680,7 @@ def show_config():
 
     func_members = inspect.getmembers(sys.modules[config.__name__])
 
-    table = []
-    for key, value in func_members:
-        if key.isupper():
-            table.append([key, value])
-
+    table = [[key, value] for key, value in func_members if key.isupper()]
     click.secho(tabulate(table, headers=["Key", "Value"]), fg="blue")
 
 
@@ -753,11 +746,9 @@ def run_slack_websocket(organization: str, project: str):
         .all()
     )
 
-    instance = None
-    for i in instances:
-        if i.plugin.slug == "slack-conversation":
-            instance = i
-            break
+    instance = next(
+        (i for i in instances if i.plugin.slug == "slack-conversation"), None
+    )
 
     if not instance:
         click.secho(

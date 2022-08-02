@@ -33,9 +33,11 @@ def get_by_name(*, db_session, project_id: int, name: str) -> Optional[Service]:
 
 def get_by_name_or_raise(*, db_session, project_id, service_in=ServiceRead) -> ServiceRead:
     """Returns the service specified or raises ValidationError."""
-    source = get_by_name(db_session=db_session, project_id=project_id, name=service_in.name)
-
-    if not source:
+    if source := get_by_name(
+        db_session=db_session, project_id=project_id, name=service_in.name
+    ):
+        return source
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -48,8 +50,6 @@ def get_by_name_or_raise(*, db_session, project_id, service_in=ServiceRead) -> S
             ],
             model=ServiceRead,
         )
-
-    return source
 
 
 def get_by_external_id_and_project_id(
@@ -68,11 +68,13 @@ def get_by_external_id_and_project_id_or_raise(
     *, db_session, project_id: int, service_in=ServiceRead
 ) -> Service:
     """Returns the service specified or raises ValidationError."""
-    service = get_by_external_id_and_project_id(
-        db_session=db_session, project_id=project_id, external_id=service_in.external_id
-    )
-
-    if not service:
+    if service := get_by_external_id_and_project_id(
+        db_session=db_session,
+        project_id=project_id,
+        external_id=service_in.external_id,
+    ):
+        return service
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -85,8 +87,6 @@ def get_by_external_id_and_project_id_or_raise(
             ],
             model=ServiceRead,
         )
-
-    return service
 
 
 def get_overdue_evergreen_services(*, db_session, project_id: int) -> List[Optional[Service]]:
@@ -107,10 +107,9 @@ def get_by_external_id_and_project_name(
     project = project_service.get_by_name_or_raise(
         db_session=db_session, project_in=ProjectRead(name=project_name)
     )
-    service = get_by_external_id_and_project_id(
+    return get_by_external_id_and_project_id(
         db_session=db_session, external_id=external_id, project_id=project.id
     )
-    return service
 
 
 def get_all(*, db_session):

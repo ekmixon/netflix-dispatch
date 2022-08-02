@@ -18,9 +18,9 @@ def get_by_name(*, db_session, name: str) -> Optional[Alert]:
 
 def get_by_name_or_raise(*, db_session, alert_in=AlertRead) -> AlertRead:
     """Returns the alert specified or raises ValidationError."""
-    alert = get_by_name(db_session=db_session, name=alert_in.name)
-
-    if not alert:
+    if alert := get_by_name(db_session=db_session, name=alert_in.name):
+        return alert
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -33,8 +33,6 @@ def get_by_name_or_raise(*, db_session, alert_in=AlertRead) -> AlertRead:
             ],
             model=AlertRead,
         )
-
-    return alert
 
 
 def get_all(*, db_session):
@@ -58,8 +56,7 @@ def get_or_create(*, db_session, alert_in: AlertCreate) -> Alert:
     else:
         q = db_session.query(Alert).filter_by(name=alert_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, alert_in=alert_in)

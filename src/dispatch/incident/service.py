@@ -77,9 +77,11 @@ def get_by_name(*, db_session, project_id: int, name: str) -> Optional[Incident]
 
 def get_by_name_or_raise(*, db_session, project_id: int, incident_in: IncidentRead) -> Incident:
     """Returns an incident based on a given name or raises ValidationError"""
-    incident = get_by_name(db_session=db_session, project_id=project_id, name=incident_in.name)
-
-    if not incident:
+    if incident := get_by_name(
+        db_session=db_session, project_id=project_id, name=incident_in.name
+    ):
+        return incident
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -92,7 +94,6 @@ def get_by_name_or_raise(*, db_session, project_id: int, incident_in: IncidentRe
             ],
             model=IncidentRead,
         )
-    return incident
 
 
 def get_all(*, db_session, project_id: int) -> List[Optional[Incident]]:
@@ -160,14 +161,11 @@ def create(*, db_session, incident_in: IncidentCreate) -> Incident:
         incident_priority_in=incident_in.incident_priority,
     )
 
-    if not incident_in.visibility:
-        visibility = incident_type.visibility
-    else:
-        visibility = incident_in.visibility
-
-    tag_objs = []
-    for t in incident_in.tags:
-        tag_objs.append(tag_service.get_or_create(db_session=db_session, tag_in=t))
+    visibility = incident_in.visibility or incident_type.visibility
+    tag_objs = [
+        tag_service.get_or_create(db_session=db_session, tag_in=t)
+        for t in incident_in.tags
+    ]
 
     # We create the incident
     incident = Incident(
@@ -270,25 +268,27 @@ def update(*, db_session, incident: Incident, incident_in: IncidentUpdate) -> In
         incident_priority_in=incident_in.incident_priority,
     )
 
-    tags = []
-    for t in incident_in.tags:
-        tags.append(tag_service.get_or_create(db_session=db_session, tag_in=t))
+    tags = [
+        tag_service.get_or_create(db_session=db_session, tag_in=t)
+        for t in incident_in.tags
+    ]
 
-    terms = []
-    for t in incident_in.terms:
-        terms.append(term_service.get_or_create(db_session=db_session, term_in=t))
+    terms = [
+        term_service.get_or_create(db_session=db_session, term_in=t)
+        for t in incident_in.terms
+    ]
 
-    duplicates = []
-    for d in incident_in.duplicates:
-        duplicates.append(get(db_session=db_session, incident_id=d.id))
+    duplicates = [
+        get(db_session=db_session, incident_id=d.id)
+        for d in incident_in.duplicates
+    ]
 
-    incident_costs = []
-    for incident_cost in incident_in.incident_costs:
-        incident_costs.append(
-            incident_cost_service.get_or_create(
-                db_session=db_session, incident_cost_in=incident_cost
-            )
+    incident_costs = [
+        incident_cost_service.get_or_create(
+            db_session=db_session, incident_cost_in=incident_cost
         )
+        for incident_cost in incident_in.incident_costs
+    ]
 
     update_data = incident_in.dict(
         skip_defaults=True,

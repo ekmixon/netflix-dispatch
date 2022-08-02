@@ -73,11 +73,7 @@ class IPlugin(local):
         Returns a boolean representing if this plugin is enabled.
         >>> plugin.is_enabled()
         """
-        if not self.enabled:
-            return False
-        if not self.can_disable:
-            return True
-        return True
+        return bool(self.enabled)
 
     def get_title(self) -> Optional[str]:
         """

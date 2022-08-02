@@ -45,12 +45,11 @@ def get_all(*, db_session) -> List[Optional[IncidentCost]]:
 
 def get_or_create(*, db_session, incident_cost_in: IncidentCostCreate) -> IncidentCost:
     """Gets or creates an incident cost."""
-    if incident_cost_in.id:
-        incident_cost = get(db_session=db_session, incident_cost_id=incident_cost_in.id)
-    else:
-        incident_cost = create(db_session=db_session, incident_cost_in=incident_cost_in)
-
-    return incident_cost
+    return (
+        get(db_session=db_session, incident_cost_id=incident_cost_in.id)
+        if incident_cost_in.id
+        else create(db_session=db_session, incident_cost_in=incident_cost_in)
+    )
 
 
 def create(*, db_session, incident_cost_in: IncidentCostCreate) -> IncidentCost:
@@ -122,25 +121,17 @@ def calculate_incident_response_cost(
 
             if incident.status == IncidentStatus.active:
                 # the incident is still active. we use the current time
-                if participant_role.renounced_at:
-                    # the participant left the conversation or got assigned another role
-                    # we use the renounced_at time
-                    participant_role_renounced_at = participant_role.renounced_at
-                else:
-                    participant_role_renounced_at = datetime.utcnow()
+                participant_role_renounced_at = (
+                    participant_role.renounced_at or datetime.utcnow()
+                )
 
+            elif (
+                participant_role.renounced_at
+                and participant_role.renounced_at < incident.stable_at
+            ):
+                participant_role_renounced_at = participant_role.renounced_at
             else:
-                if participant_role.renounced_at:
-                    # the participant left the conversation or got assigned another role
-                    # we use the renounced_at time
-                    if participant_role.renounced_at < incident.stable_at:
-                        participant_role_renounced_at = participant_role.renounced_at
-                    else:
-                        participant_role_renounced_at = incident.stable_at
-                else:
-                    # the incident is stable or closed. we use the stable_at time
-                    participant_role_renounced_at = incident.stable_at
-
+                participant_role_renounced_at = incident.stable_at
             # we calculate the time the participant has spent in the incident role
             participant_role_time = participant_role_renounced_at - participant_role_assumed_at
 
@@ -187,10 +178,10 @@ def calculate_incident_response_cost(
         incident.project.annual_employee_cost / incident.project.business_year_hours
     )
 
-    # we calculate and round up the incident cost
-    incident_cost = math.ceil(
-        ((participants_total_response_time_seconds / SECONDS_IN_HOUR) + incident_review_hours)
+    return math.ceil(
+        (
+            (participants_total_response_time_seconds / SECONDS_IN_HOUR)
+            + incident_review_hours
+        )
         * hourly_rate
     )
-
-    return incident_cost

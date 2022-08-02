@@ -86,15 +86,11 @@ def get_revision():
     package_dir = os.path.dirname(__file__)
     checkout_dir = os.path.normpath(os.path.join(package_dir, os.pardir, os.pardir))
     path = os.path.join(checkout_dir)
-    if os.path.exists(path):
-        return _get_git_revision(path)
-    return None
+    return _get_git_revision(path) if os.path.exists(path) else None
 
 
 def get_version():
-    if __build__:
-        return f"{__version__}.{__build__}"
-    return __version__
+    return f"{__version__}.{__build__}" if __build__ else __version__
 
 
 def is_docker():

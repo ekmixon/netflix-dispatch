@@ -68,9 +68,8 @@ def get_current_document(documents, resource_type):
 
 def get_current_group(groups, resource_type):
     for g in groups:
-        if g.resource_type:
-            if g.resource_type.endswith(resource_type):
-                return g
+        if g.resource_type and g.resource_type.endswith(resource_type):
+            return g
 
 
 def upgrade():
@@ -82,28 +81,24 @@ def upgrade():
     incidents = session.query(Incident).all()
 
     for incident in incidents:
-        # we set the incident document and post-incident review document foreign keys
-        incident_document = get_current_document(incident.documents, DocumentResourceTypes.incident)
-        if incident_document:
+        if incident_document := get_current_document(
+            incident.documents, DocumentResourceTypes.incident
+        ):
             incident.incident_document_id = incident_document.id
 
-        incident_review_document = get_current_document(
+        if incident_review_document := get_current_document(
             incident.documents, DocumentResourceTypes.review
-        )
-        if incident_review_document:
+        ):
             incident.incident_review_document_id = incident_review_document.id
 
-        # we set the tactical and notifications foreign keys
-        tactical_group = get_current_group(incident.groups, "tactical-group")
-        if tactical_group:
+        if tactical_group := get_current_group(
+            incident.groups, "tactical-group"
+        ):
             incident.tactical_group_id = tactical_group.id
 
-        notifications_group = get_current_group(incident.groups, "notification-group")
-        if not notifications_group:
-            # we check for the current resource type name
-            notifications_group = get_current_group(incident.groups, "notifications-group")
-
-        if notifications_group:
+        if notifications_group := get_current_group(
+            incident.groups, "notification-group"
+        ) or get_current_group(incident.groups, "notifications-group"):
             incident.notifications_group_id = notifications_group.id
 
     session.commit()

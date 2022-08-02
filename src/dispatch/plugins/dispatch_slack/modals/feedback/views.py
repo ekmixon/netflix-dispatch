@@ -37,11 +37,10 @@ def rating_feedback_view(incident: Incident, channel_id: str):
         "private_metadata": json.dumps({"incident_id": str(incident.id), "channel_id": channel_id}),
     }
 
-    rating_picker_options = []
-    for rating in FeedbackRating:
-        rating_picker_options.append(
-            {"text": {"type": "plain_text", "text": rating}, "value": rating}
-        )
+    rating_picker_options = [
+        {"text": {"type": "plain_text", "text": rating}, "value": rating}
+        for rating in FeedbackRating
+    ]
 
     rating_picker_block = {
         "type": "input",

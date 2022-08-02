@@ -51,9 +51,7 @@ class Participant(Base):
     def active_roles(self):
         roles = []
         if self.participant_roles:
-            for pr in self.participant_roles:
-                if not pr.renounced_at:
-                    roles.append(pr)
+            roles.extend(pr for pr in self.participant_roles if not pr.renounced_at)
         return roles
 
     @active_roles.expression

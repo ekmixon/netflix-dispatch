@@ -35,11 +35,13 @@ def get_by_name_or_raise(
     *, db_session, project_id, source_transport_in=SourceTransportRead
 ) -> SourceTransportRead:
     """Returns the source transport specified or raises ValidationError."""
-    source = get_by_name(
-        db_session=db_session, project_id=project_id, name=source_transport_in.name
-    )
-
-    if not source:
+    if source := get_by_name(
+        db_session=db_session,
+        project_id=project_id,
+        name=source_transport_in.name,
+    ):
+        return source
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -52,8 +54,6 @@ def get_by_name_or_raise(
             ],
             model=SourceTransportRead,
         )
-
-    return source
 
 
 def get_all(*, db_session, project_id: int) -> List[Optional[SourceTransport]]:
@@ -82,8 +82,7 @@ def get_or_create(*, db_session, source_transport_in: SourceTransportCreate) -> 
     else:
         q = db_session.query(SourceTransport).filter_by(name=source_transport_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(

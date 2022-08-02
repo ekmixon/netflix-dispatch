@@ -423,7 +423,7 @@ def add_timeline_event_from_submitted_form(
     )
 
     event_timezone = event_timezone_selection
-    if event_timezone_selection == "profile":
+    if event_timezone == "profile":
         participant_profile = get_user_profile_by_email(slack_client, user_email)
         if participant_profile.get("tz"):
             event_timezone = participant_profile.get("tz")

@@ -74,14 +74,13 @@ def get_users(*, organization: OrganizationSlug, common: dict = Depends(common_p
 @user_router.get("/{user_id}", response_model=UserRead)
 def get_user(*, db_session: Session = Depends(get_db), user_id: PrimaryKey):
     """Get a user."""
-    user = get(db_session=db_session, user_id=user_id)
-    if not user:
+    if user := get(db_session=db_session, user_id=user_id):
+        return user
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A user with this id does not exist."}],
         )
-
-    return user
 
 
 @auth_router.get("/me", response_model=UserRead)
@@ -144,15 +143,15 @@ def login_user(
 ):
     user = get_by_email(db_session=db_session, email=user_in.email)
     if user and user.check_password(user_in.password):
-        projects = []
-        for user_project in user.projects:
-            projects.append(
-                {
-                    "project": user_project.project,
-                    "default": user_project.default,
-                    "role": user_project.role,
-                }
-            )
+        projects = [
+            {
+                "project": user_project.project,
+                "default": user_project.default,
+                "role": user_project.role,
+            }
+            for user_project in user.projects
+        ]
+
         return {"projects": projects, "token": user.token}
 
     raise ValidationError(

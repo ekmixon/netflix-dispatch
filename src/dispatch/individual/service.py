@@ -47,11 +47,13 @@ def get_by_email_and_project_id_or_raise(
     *, db_session, project_id: int, individual_contact_in=IndividualContactRead
 ) -> IndividualContactRead:
     """Returns the individual specified or raises ValidationError."""
-    individual_contact = get_by_email_and_project(
-        db_session=db_session, project_id=project_id, email=individual_contact_in.email
-    )
-
-    if not individual_contact:
+    if individual_contact := get_by_email_and_project(
+        db_session=db_session,
+        project_id=project_id,
+        email=individual_contact_in.email,
+    ):
+        return individual_contact
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -64,8 +66,6 @@ def get_by_email_and_project_id_or_raise(
             ],
             model=IndividualContactRead,
         )
-
-    return individual_contact
 
 
 def get_all(*, db_session) -> List[Optional[IndividualContact]]:
@@ -82,15 +82,14 @@ def get_or_create(
         db_session=db_session, email=email, project_id=incident.project.id
     )
 
-    # we try to fetch the individual's contact information using the contact plugin
-    contact_plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=incident.project.id, plugin_type="contact"
-    )
-
-    individual_info = {}
-    if contact_plugin:
+    if contact_plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=incident.project.id,
+        plugin_type="contact",
+    ):
         individual_info = contact_plugin.instance.get(email, db_session=db_session)
-
+    else:
+        individual_info = {}
     kwargs["email"] = individual_info.get("email", email)
     kwargs["name"] = individual_info.get("fullname", "Unknown")
     kwargs["weblink"] = individual_info.get("weblink", "")

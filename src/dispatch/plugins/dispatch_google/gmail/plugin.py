@@ -45,10 +45,9 @@ def send_message(service, message: dict) -> bool:
         .execute()
     )["messages"]
 
-    for message in messages:
-        if message["threadId"] == sent_message_thread_id:
-            return False
-    return True
+    return all(
+        message["threadId"] != sent_message_thread_id for message in messages
+    )
 
 
 def create_html_message(sender: str, recipient: str, cc: str, subject: str, body: str) -> Dict:
@@ -98,16 +97,16 @@ class GoogleGmailEmailPlugin(EmailPlugin):
         if kwargs.get("subject"):
             subject = kwargs["subject"]
 
-        cc = ""
-        if kwargs.get("cc"):
-            cc = kwargs["cc"]
-
-        if not items:
-            message_body = create_message_body(notification_template, notification_type, **kwargs)
-        else:
-            message_body = create_multi_message_body(
+        cc = kwargs["cc"] if kwargs.get("cc") else ""
+        message_body = (
+            create_multi_message_body(
                 notification_template, notification_type, items, **kwargs
             )
+            if items
+            else create_message_body(
+                notification_template, notification_type, **kwargs
+            )
+        )
 
         html_message = create_html_message(
             self.configuration.service_account_delegated_account,

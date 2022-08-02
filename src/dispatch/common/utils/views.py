@@ -12,6 +12,6 @@ def create_pydantic_include(include):
                     keyset = {key: keyset}
             else:
                 keyset = {key: ...}
-        include_sets.update(keyset)
+        include_sets |= keyset
 
     return include_sets

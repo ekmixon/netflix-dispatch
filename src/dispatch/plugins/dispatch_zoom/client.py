@@ -19,14 +19,14 @@ class ZoomClient:
         self.timeout = 15
 
     def _get_headers(self):
-        headers = {}
-        headers["authorization"] = f"Bearer {self.token}"
-        headers["content-type"] = "application/json"
-        return headers
+        return {
+            "authorization": f"Bearer {self.token}",
+            "content-type": "application/json",
+        }
 
     def get(self, path, params=None):
         return requests.get(
-            "{}/{}".format(API_BASE_URI, path),
+            f"{API_BASE_URI}/{path}",
             params=params,
             headers=self.headers,
             timeout=self.timeout,
@@ -34,7 +34,7 @@ class ZoomClient:
 
     def post(self, path, data):
         return requests.post(
-            "{}/{}".format(API_BASE_URI, path),
+            f"{API_BASE_URI}/{path}",
             data=json.dumps(data),
             headers=self.headers,
             timeout=self.timeout,
@@ -42,7 +42,7 @@ class ZoomClient:
 
     def delete(self, path, data=None, params=None):
         return requests.delete(
-            "{}/{}".format(API_BASE_URI, path),
+            f"{API_BASE_URI}/{path}",
             data=json.dumps(data),
             params=params,
             headers=self.headers,
@@ -53,5 +53,4 @@ class ZoomClient:
 def generate_jwt(key, secret):
     header = {"alg": "HS256", "typ": "JWT"}
     payload = {"iss": key, "exp": int(time.time() + 3600)}
-    token = jwt.encode(payload, secret, algorithm="HS256", headers=header)
-    return token
+    return jwt.encode(payload, secret, algorithm="HS256", headers=header)

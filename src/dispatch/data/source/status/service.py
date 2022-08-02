@@ -31,9 +31,13 @@ def get_by_name_or_raise(
     *, db_session, project_id, source_status_in=SourceStatusRead
 ) -> SourceStatusRead:
     """Returns the status specified or raises ValidationError."""
-    status = get_by_name(db_session=db_session, project_id=project_id, name=source_status_in.name)
-
-    if not status:
+    if status := get_by_name(
+        db_session=db_session,
+        project_id=project_id,
+        name=source_status_in.name,
+    ):
+        return status
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -46,8 +50,6 @@ def get_by_name_or_raise(
             ],
             model=SourceStatusRead,
         )
-
-    return status
 
 
 def get_all(*, db_session, project_id: int) -> List[Optional[SourceStatus]]:
@@ -74,8 +76,7 @@ def get_or_create(*, db_session, source_status_in: SourceStatusCreate) -> Source
     else:
         q = db_session.query(SourceStatus).filter_by(name=source_status_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(

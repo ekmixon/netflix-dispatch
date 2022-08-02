@@ -25,9 +25,11 @@ def get_by_name(*, db_session, project_id: int, name: str) -> Optional[Tag]:
 
 def get_by_name_or_raise(*, db_session, project_id: int, tag_in=TagRead) -> TagRead:
     """Returns the tag specified or raises ValidationError."""
-    tag = get_by_name(db_session=db_session, project_id=project_id, name=tag_in.name)
-
-    if not tag:
+    if tag := get_by_name(
+        db_session=db_session, project_id=project_id, name=tag_in.name
+    ):
+        return tag
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -40,8 +42,6 @@ def get_by_name_or_raise(*, db_session, project_id: int, tag_in=TagRead) -> TagR
             ],
             model=TagRead,
         )
-
-    return tag
 
 
 def get_all(*, db_session, project_id: int):
@@ -69,8 +69,7 @@ def get_or_create(*, db_session, tag_in: TagCreate) -> Tag:
     else:
         q = db_session.query(Tag).filter_by(name=tag_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, tag_in=tag_in)

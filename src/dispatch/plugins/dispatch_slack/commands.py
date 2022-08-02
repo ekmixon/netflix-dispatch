@@ -155,8 +155,7 @@ async def handle_non_incident_conversation_commands(config, client, request, bac
     """Handles all commands that do not have a specific incident conversation."""
     command = request.get("command")
     channel_id = request.get("channel_id")
-    command_args = request.get("text", "").split(" ")
-    if command_args:
+    if command_args := request.get("text", "").split(" "):
         organization_slug = command_args[0]
 
     # We get the list of public and private conversations the Dispatch bot is a member of
@@ -390,30 +389,34 @@ def list_workflows(
     """Returns the list of incident workflows to the user as an ephemeral message."""
     incident = incident_service.get(db_session=db_session, incident_id=incident_id)
 
-    blocks = []
-    blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": "*Incident Workflows*"}})
-    for w in incident.workflow_instances:
-        artifact_links = ""
-        for a in w.artifacts:
-            artifact_links += f"- <{a.weblink}|{a.name}> \n"
+    blocks = [
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Incident Workflows*"},
+        }
+    ]
 
-        blocks.append(
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": (
-                        f"*Name:* <{w.weblink}|{w.workflow.name}>\n"
-                        f"*Workflow Description:* {w.workflow.description}\n"
-                        f"*Run Reason:* {w.run_reason}\n"
-                        f"*Creator:* {w.creator.individual.name}\n"
-                        f"*Status:* {w.status}\n"
-                        f"*Artifacts:* \n {artifact_links}"
-                    ),
+    for w in incident.workflow_instances:
+        artifact_links = "".join(f"- <{a.weblink}|{a.name}> \n" for a in w.artifacts)
+        blocks.extend(
+            (
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": (
+                            f"*Name:* <{w.weblink}|{w.workflow.name}>\n"
+                            f"*Workflow Description:* {w.workflow.description}\n"
+                            f"*Run Reason:* {w.run_reason}\n"
+                            f"*Creator:* {w.creator.individual.name}\n"
+                            f"*Status:* {w.status}\n"
+                            f"*Artifacts:* \n {artifact_links}"
+                        ),
+                    },
                 },
-            }
+                {"type": "divider"},
+            )
         )
-        blocks.append({"type": "divider"})
 
     dispatch_slack_service.send_ephemeral_message(
         slack_client,
@@ -436,10 +439,12 @@ def list_participants(
     slack_client=None,
 ):
     """Returns the list of incident participants to the user as an ephemeral message."""
-    blocks = []
-    blocks.append(
-        {"type": "section", "text": {"type": "mrkdwn", "text": "*Incident Participants*"}}
-    )
+    blocks = [
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Incident Participants*"},
+        }
+    ]
 
     participants = participant_service.get_all_by_incident_id(
         db_session=db_session, incident_id=incident_id
@@ -473,10 +478,7 @@ def list_participants(
             participant_active_roles = participant_role_service.get_all_active_roles(
                 db_session=db_session, participant_id=participant.id
             )
-            participant_roles = []
-            for role in participant_active_roles:
-                participant_roles.append(role.role)
-
+            participant_roles = [role.role for role in participant_active_roles]
             # TODO we should make this more resilient to missing data (kglisson)
             block = {
                 "type": "section",
@@ -494,19 +496,14 @@ def list_participants(
             }
 
             if len(participants) < 20:
-                block.update(
-                    {
-                        "accessory": {
-                            "type": "image",
-                            "alt_text": participant_name,
-                            "image_url": participant_avatar_url,
-                        },
-                    }
-                )
+                block["accessory"] = {
+                    "type": "image",
+                    "alt_text": participant_name,
+                    "image_url": participant_avatar_url,
+                }
 
-            blocks.append(block)
-            blocks.append({"type": "divider"})
 
+            blocks.extend((block, {"type": "divider"}))
     dispatch_slack_service.send_ephemeral_message(
         slack_client,
         channel_id,
@@ -533,34 +530,31 @@ def list_incidents(
     incidents = []
     args = command["text"].split(" ")
 
-    # scopes reply to the current incident's project
-    incident = incident_service.get(db_session=db_session, incident_id=incident_id)
-
-    if incident:
+    if incident := incident_service.get(
+        db_session=db_session, incident_id=incident_id
+    ):
         # command was run in an incident conversation
         projects.append(incident.project)
-    else:
-        # command was run in a non-incident conversation
-        if len(args) == 2:
-            project = project_service.get_by_name(db_session=db_session, name=args[1])
+    elif len(args) == 2:
+        project = project_service.get_by_name(db_session=db_session, name=args[1])
 
-            if project:
-                projects.append()
-            else:
-                raise ValidationError(
-                    [
-                        ErrorWrapper(
-                            NotFoundError(
-                                msg=f"Project name '{args[1]}' in organization '{args[0]}' not found. Check your spelling."
-                            ),
-                            loc="project",
-                        )
-                    ],
-                    model=BaseModel,
-                )
-
+        if project:
+            projects.append()
         else:
-            projects = project_service.get_all(db_session=db_session)
+            raise ValidationError(
+                [
+                    ErrorWrapper(
+                        NotFoundError(
+                            msg=f"Project name '{args[1]}' in organization '{args[0]}' not found. Check your spelling."
+                        ),
+                        loc="project",
+                    )
+                ],
+                model=BaseModel,
+            )
+
+    else:
+        projects = project_service.get_all(db_session=db_session)
 
     for project in projects:
         # we fetch active incidents
@@ -587,8 +581,12 @@ def list_incidents(
             )
         )
 
-    blocks = []
-    blocks.append({"type": "header", "text": {"type": "plain_text", "text": "List of Incidents"}})
+    blocks = [
+        {
+            "type": "header",
+            "text": {"type": "plain_text", "text": "List of Incidents"},
+        }
+    ]
 
     if incidents:
         for incident in incidents:

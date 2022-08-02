@@ -27,9 +27,11 @@ def get_default(*, db_session, project_id: int):
 
 def get_default_or_raise(*, db_session, project_id: int) -> IncidentType:
     """Returns the default incident_type or raise a ValidationError if one doesn't exist."""
-    incident_type = get_default(db_session=db_session, project_id=project_id)
-
-    if not incident_type:
+    if incident_type := get_default(
+        db_session=db_session, project_id=project_id
+    ):
+        return incident_type
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -39,7 +41,6 @@ def get_default_or_raise(*, db_session, project_id: int) -> IncidentType:
             ],
             model=IncidentTypeRead,
         )
-    return incident_type
 
 
 def get_by_name(*, db_session, project_id: int, name: str) -> Optional[IncidentType]:
@@ -56,11 +57,13 @@ def get_by_name_or_raise(
     *, db_session, project_id: int, incident_type_in=IncidentTypeRead
 ) -> IncidentType:
     """Returns the incident_type specified or raises ValidationError."""
-    incident_type = get_by_name(
-        db_session=db_session, project_id=project_id, name=incident_type_in.name
-    )
-
-    if not incident_type:
+    if incident_type := get_by_name(
+        db_session=db_session,
+        project_id=project_id,
+        name=incident_type_in.name,
+    ):
+        return incident_type
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -73,18 +76,15 @@ def get_by_name_or_raise(
             model=IncidentTypeRead,
         )
 
-    return incident_type
-
 
 def get_by_name_or_default(
     *, db_session, project_id: int, incident_type_in=IncidentTypeRead
 ) -> IncidentType:
     """Returns a incident_type based on a name or the default if not specified."""
-    if incident_type_in:
-        if incident_type_in.name:
-            return get_by_name_or_raise(
-                db_session=db_session, project_id=project_id, incident_type_in=incident_type_in
-            )
+    if incident_type_in and incident_type_in.name:
+        return get_by_name_or_raise(
+            db_session=db_session, project_id=project_id, incident_type_in=incident_type_in
+        )
     return get_default_or_raise(db_session=db_session, project_id=project_id)
 
 

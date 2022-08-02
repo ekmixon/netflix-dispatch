@@ -48,8 +48,7 @@ def create_task(
 ):
     """Creates a new task."""
     task_in.creator = {"individual": {"email": current_user.email}}
-    task = create(db_session=db_session, task_in=task_in)
-    return task
+    return create(db_session=db_session, task_in=task_in)
 
 
 @router.put("/{task_id}", response_model=TaskRead, tags=["tasks"])

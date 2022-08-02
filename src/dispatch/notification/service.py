@@ -104,10 +104,11 @@ def delete(*, db_session, notification_id: int):
 
 def send(*, db_session, project_id: int, notification: Notification, notification_params: dict):
     """Send a notification via plugin."""
-    plugin = plugin_service.get_active_instance(
-        db_session=db_session, project_id=project_id, plugin_type=notification.type
-    )
-    if plugin:
+    if plugin := plugin_service.get_active_instance(
+        db_session=db_session,
+        project_id=project_id,
+        plugin_type=notification.type,
+    ):
         plugin.instance.send(
             notification.target,
             notification_params["text"],
@@ -128,12 +129,11 @@ def filter_and_send(
     notifications = get_all_enabled(db_session=db_session, project_id=incident.project.id)
     for notification in notifications:
         for search_filter in notification.filters:
-            match = search_filter_service.match(
+            if match := search_filter_service.match(
                 db_session=db_session,
                 filter_spec=search_filter.expression,
                 class_instance=class_instance,
-            )
-            if match:
+            ):
                 send(
                     db_session=db_session,
                     project_id=incident.project.id,

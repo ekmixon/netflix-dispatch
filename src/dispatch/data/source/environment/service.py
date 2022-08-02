@@ -35,13 +35,13 @@ def get_by_name_or_raise(
     *, db_session, project_id, source_environment_in=SourceEnvironmentRead
 ) -> SourceEnvironmentRead:
     """Returns the source specified or raises ValidationError."""
-    source = get_by_name(
+    if source := get_by_name(
         db_session=db_session,
         project_id=project_id,
         name=source_environment_in.name,
-    )
-
-    if not source:
+    ):
+        return source
+    else:
         raise ValidationError(
             [
                 ErrorWrapper(
@@ -54,8 +54,6 @@ def get_by_name_or_raise(
             ],
             model=SourceEnvironmentRead,
         )
-
-    return source
 
 
 def get_all(*, db_session, project_id: int) -> List[Optional[SourceEnvironment]]:
@@ -88,8 +86,7 @@ def get_or_create(
     else:
         q = db_session.query(SourceEnvironment).filter_by(name=source_environment_in.name)
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(

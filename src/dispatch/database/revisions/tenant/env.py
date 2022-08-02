@@ -21,19 +21,16 @@ target_metadata = Base.metadata
 
 
 def get_tenant_schemas(connection):
-    tenant_schemas = []
-    for s in inspect(connection).get_schema_names():
-        if s.startswith("dispatch_organization_"):
-            tenant_schemas.append(s)
-    return tenant_schemas
+    return [
+        s
+        for s in inspect(connection).get_schema_names()
+        if s.startswith("dispatch_organization_")
+    ]
 
 
 # produce an include object function that filters on the given schemas
 def include_object(object, name, type_, reflected, compare_to):
-    if type_ == "table":
-        if object.schema:
-            return False
-    return True
+    return type_ != "table" or not object.schema
 
 
 def run_migrations_online():
@@ -72,9 +69,11 @@ def run_migrations_online():
             with context.begin_transaction():
                 context.run_migrations()
 
-            if context.config.cmd_opts:
-                if context.config.cmd_opts.cmd == "revision":
-                    break
+            if (
+                context.config.cmd_opts
+                and context.config.cmd_opts.cmd == "revision"
+            ):
+                break
 
 
 if context.is_offline_mode():

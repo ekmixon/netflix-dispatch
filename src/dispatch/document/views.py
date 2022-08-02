@@ -20,13 +20,13 @@ def get_documents(*, common: dict = Depends(common_parameters)):
 @router.get("/{document_id}", response_model=DocumentRead)
 def get_document(*, db_session: Session = Depends(get_db), document_id: PrimaryKey):
     """Update a document."""
-    document = get(db_session=db_session, document_id=document_id)
-    if not document:
+    if document := get(db_session=db_session, document_id=document_id):
+        return document
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The document with this id does not exist."}],
         )
-    return document
 
 
 @router.post("", response_model=DocumentRead)
@@ -53,10 +53,10 @@ def update_document(
 @router.delete("/{document_id}")
 def delete_document(*, db_session: Session = Depends(get_db), document_id: PrimaryKey):
     """Delete a document."""
-    document = get(db_session=db_session, document_id=document_id)
-    if not document:
+    if document := get(db_session=db_session, document_id=document_id):
+        delete(db_session=db_session, document_id=document_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The document with this id does not exist."}],
         )
-    delete(db_session=db_session, document_id=document_id)

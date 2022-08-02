@@ -73,9 +73,7 @@ Incident Commander: [~{{commander_username}}]
 
 def get_email_username(email: str) -> str:
     """Returns username part of email, if valid email is provided."""
-    if "@" in email:
-        return email.split("@")[0]
-    return email
+    return email.split("@")[0] if "@" in email else email
 
 
 def get_user_field(client: JIRA, hosting_type: str, jira_username: str, user_email: str) -> dict:
@@ -83,13 +81,11 @@ def get_user_field(client: JIRA, hosting_type: str, jira_username: str, user_ema
     if hosting_type == "server":
         username = get_email_username(user_email)
         users = client.search_users(user=username)
-        for user in users:
-            if user.name == username:
-                return {"name": user.name}
+        return next(
+            ({"name": user.name} for user in users if user.name == username),
+            {"name": jira_username},
+        )
 
-        # we default to the Jira user we use for managing issues
-        # if we can't find the user in Jira
-        return {"name": jira_username}
     if hosting_type == "cloud":
         username = get_email_username(user_email)
         user = next(
@@ -136,11 +132,7 @@ def create_issue_fields(
     """Creates Jira issue fields."""
     cost = f"${cost:,.2f}"
 
-    issue_fields = {}
-    issue_fields.update({"summary": title})
-    issue_fields.update({"assignee": assignee})
-    issue_fields.update({"reporter": reporter})
-
+    issue_fields = {"summary": title, "assignee": assignee, "reporter": reporter}
     description = Template(ISSUE_SUMMARY_TEMPLATE).render(
         description=description,
         incident_type=incident_type,
@@ -152,7 +144,7 @@ def create_issue_fields(
         conversation_weblink=conversation_weblink,
         storage_weblink=storage_weblink,
     )
-    issue_fields.update({"description": description})
+    issue_fields["description"] = description
 
     return issue_fields
 

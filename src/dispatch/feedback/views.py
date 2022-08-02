@@ -27,13 +27,13 @@ def get_feedback_entries(*, commons: dict = Depends(common_parameters)):
 @router.get("/{feedback_id}", response_model=FeedbackRead)
 def get_feedback(*, db_session: Session = Depends(get_db), feedback_id: PrimaryKey):
     """Get a feedback entry by its id."""
-    feedback = get(db_session=db_session, feedback_id=feedback_id)
-    if not feedback:
+    if feedback := get(db_session=db_session, feedback_id=feedback_id):
+        return feedback
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A feedback entry with this id does not exist."}],
         )
-    return feedback
 
 
 @router.post("", response_model=FeedbackRead)
@@ -60,10 +60,10 @@ def update_feedback(
 @router.delete("/{feedback_id}")
 def delete_feedback(*, db_session: Session = Depends(get_db), feedback_id: PrimaryKey):
     """Delete a feedback entry, returning only an HTTP 200 OK if successful."""
-    feedback = get(db_session=db_session, feedback_id=feedback_id)
-    if not feedback:
+    if feedback := get(db_session=db_session, feedback_id=feedback_id):
+        delete(db_session=db_session, feedback_id=feedback_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A feedback entry with this id does not exist."}],
         )
-    delete(db_session=db_session, feedback_id=feedback_id)

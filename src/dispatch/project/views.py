@@ -57,13 +57,13 @@ def create_project(*, db_session: Session = Depends(get_db), project_in: Project
 )
 def get_project(*, db_session: Session = Depends(get_db), project_id: PrimaryKey):
     """Get a project."""
-    project = get(db_session=db_session, project_id=project_id)
-    if not project:
+    if project := get(db_session=db_session, project_id=project_id):
+        return project
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A project with this id does not exist."}],
         )
-    return project
 
 
 @router.put(

@@ -42,13 +42,13 @@ def create_team(*, db_session: Session = Depends(get_db), team_contact_in: TeamC
 @router.get("/{team_contact_id}", response_model=TeamContactRead)
 def get_team(*, db_session: Session = Depends(get_db), team_contact_id: PrimaryKey):
     """Get a team contact."""
-    team = get(db_session=db_session, team_contact_id=team_contact_id)
-    if not team:
+    if team := get(db_session=db_session, team_contact_id=team_contact_id):
+        return team
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The team with this id does not exist."}],
         )
-    return team
 
 
 @router.put("/{team_contact_id}", response_model=TeamContactRead)

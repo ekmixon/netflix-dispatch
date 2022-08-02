@@ -41,11 +41,7 @@ def sync_document_terms(db_session: SessionLocal, project: Project):
         log.debug(f"Processing document. Name: {doc.name}")
 
         try:
-            if "sheet" in doc.resource_type:
-                mime_type = "text/csv"
-            else:
-                mime_type = "text/plain"
-
+            mime_type = "text/csv" if "sheet" in doc.resource_type else "text/plain"
             doc_text = p.instance.get(doc.resource_id, mime_type)
             extracted_terms = list(set(extract_terms_from_text(doc_text, matcher)))
 

@@ -123,9 +123,8 @@ class OrganizationManagerPermission(BasePermission):
             ],
             request=request,
         )
-        if not permission:
-            if self.role == UserRoles.manager:
-                return True
+        if not permission and self.role == UserRoles.manager:
+            return True
         return permission
 
 
@@ -138,10 +137,7 @@ class OrganizationAdminPermission(BasePermission):
             ],
             request=request,
         )
-        if not permission:
-            if self.role == UserRoles.admin:
-                return True
-        return permission
+        return True if not permission and self.role == UserRoles.admin else permission
 
 
 class OrganizationMemberPermission(BasePermission):
@@ -157,10 +153,7 @@ class OrganizationMemberPermission(BasePermission):
             ],
             request=request,
         )
-        if not permission:
-            if self.role == UserRoles.member:
-                return True
-        return permission
+        return True if not permission and self.role == UserRoles.member else permission
 
 
 class SensitiveProjectActionPermission(BasePermission):
@@ -224,23 +217,25 @@ class IncidentViewPermission(BasePermission):
         self,
         request: Request,
     ) -> bool:
-        current_incident = incident_service.get(
-            db_session=request.state.db, incident_id=request.path_params["incident_id"]
-        )
-
-        if not current_incident:
-            return False
-
-        if current_incident.visibility == Visibility.restricted:
-            return any_permission(
-                permissions=[
-                    OrganizationAdminPermission,
-                    IncidentCommanderPermission,
-                    IncidentReporterPermission,
-                ],
-                request=request,
+        if current_incident := incident_service.get(
+            db_session=request.state.db,
+            incident_id=request.path_params["incident_id"],
+        ):
+            return (
+                any_permission(
+                    permissions=[
+                        OrganizationAdminPermission,
+                        IncidentCommanderPermission,
+                        IncidentReporterPermission,
+                    ],
+                    request=request,
+                )
+                if current_incident.visibility == Visibility.restricted
+                else True
             )
-        return True
+
+        else:
+            return False
 
 
 class IncidentEditPermission(BasePermission):
@@ -287,6 +282,8 @@ class IncidentCommanderPermission(BasePermission):
         if not current_incident:
             return
 
-        if current_incident.commander:
-            if current_incident.commander.individual.email == current_user.email:
-                return True
+        if (
+            current_incident.commander
+            and current_incident.commander.individual.email == current_user.email
+        ):
+            return True

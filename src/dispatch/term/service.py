@@ -61,9 +61,7 @@ def update(*, db_session, term: Term, term_in: TermUpdate) -> Term:
 def update_or_create(*, db_session, term_in: TermCreate) -> Term:
     q = db_session.query(Term).filter(Term.text == term_in.text)
 
-    instance = q.first()
-
-    if instance:
+    if instance := q.first():
         return update(db_session=db_session, term=instance, term_in=term_in)
 
     return create(db_session=db_session, term_in=term_in)
@@ -75,8 +73,7 @@ def get_or_create(*, db_session, term_in) -> Term:
     else:
         q = db_session.query(Term).filter_by(**term_in.dict(exclude={"definitions", "id"}))
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, term_in=term_in)

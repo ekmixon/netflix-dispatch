@@ -78,10 +78,7 @@ def upsert(*, db_session, definition_in: DefinitionCreate) -> Definition:
     """Gets or creates a new definition."""
     # we only care about unique columns
     q = db_session.query(Definition).filter(Definition.text == definition_in.text)
-    instance = q.first()
-
-    # there are no updatable fields
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, definition_in=definition_in)

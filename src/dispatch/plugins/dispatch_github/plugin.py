@@ -34,10 +34,7 @@ def create_ua_string():
     }
 
     # Concatenate and format the user-agent string to be passed into request headers
-    ua_string = []
-    for _, val in package_info.items():
-        ua_string.append(val)
-
+    ua_string = list(package_info.values())
     return " ".join(ua_string)
 
 
@@ -87,7 +84,7 @@ class GithubMonitorPlugin(MonitorPlugin):
         # https://docs.github.com/en/rest/overview/resources-in-the-rest-api#conditional-requests
         headers = {"User-Agent": create_ua_string()}
         if last_modified:
-            headers.update({"If-Modified-Since": str(last_modified)})
+            headers["If-Modified-Since"] = str(last_modified)
 
         resp = requests.get(request_url, headers=headers)
 
@@ -100,9 +97,7 @@ class GithubMonitorPlugin(MonitorPlugin):
 
         if resp.status_code == 200:
             data = resp.json()
-            monitor_data = {
+            return {
                 "title": data["title"],
                 "state": data["state"],
             }
-
-            return monitor_data

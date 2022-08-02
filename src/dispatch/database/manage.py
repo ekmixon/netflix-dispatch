@@ -35,20 +35,16 @@ def version_schema(script_location: str):
 
 def get_core_tables():
     """Fetches tables that belong to the 'dispatch_core' schema."""
-    core_tables = []
-    for _, table in Base.metadata.tables.items():
-        if table.schema == "dispatch_core":
-            core_tables.append(table)
-    return core_tables
+    return [
+        table
+        for _, table in Base.metadata.tables.items()
+        if table.schema == "dispatch_core"
+    ]
 
 
 def get_tenant_tables():
     """Fetches tables that belong to their own tenant tables."""
-    tenant_tables = []
-    for _, table in Base.metadata.tables.items():
-        if not table.schema:
-            tenant_tables.append(table)
-    return tenant_tables
+    return [table for _, table in Base.metadata.tables.items() if not table.schema]
 
 
 def init_database(engine):

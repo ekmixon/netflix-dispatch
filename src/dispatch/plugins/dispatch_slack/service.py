@@ -16,9 +16,11 @@ log = logging.getLogger(__name__)
 
 def create_slack_client(config: SlackConversationConfiguration, run_async: bool = False):
     """Creates a Slack Web API client."""
-    if not run_async:
-        return slack_sdk.WebClient(token=config.api_bot_token.get_secret_value())
-    return AsyncWebClient(token=config.api_bot_token.get_secret_value())
+    return (
+        AsyncWebClient(token=config.api_bot_token.get_secret_value())
+        if run_async
+        else slack_sdk.WebClient(token=config.api_bot_token.get_secret_value())
+    )
 
 
 def resolve_user(client: Any, user_id: str):
@@ -50,7 +52,7 @@ def paginated(data_key):
                 if not next_cursor:
                     break
 
-                kwargs.update({"cursor": next_cursor})
+                kwargs["cursor"] = next_cursor
 
             return results
 
@@ -73,7 +75,7 @@ def time_pagination(data_key):
                 if not response["has_more"]:
                     break
 
-                kwargs.update({"latest": response["messages"][0]["ts"]})
+                kwargs["latest"] = response["messages"][0]["ts"]
 
             return results
 
@@ -118,14 +120,13 @@ def make_call(client: Any, endpoint: str, **kwargs):
             time.sleep(300)
             raise TryAgain
 
-        if e.response.headers.get("Retry-After"):
-            wait = int(e.response.headers["Retry-After"])
-            log.info(f"SlackError: Rate limit hit. Waiting {wait} seconds.")
-            time.sleep(wait)
-            raise TryAgain
-        else:
+        if not e.response.headers.get("Retry-After"):
             raise e
 
+        wait = int(e.response.headers["Retry-After"])
+        log.info(f"SlackError: Rate limit hit. Waiting {wait} seconds.")
+        time.sleep(wait)
+        raise TryAgain
     return response
 
 
@@ -140,14 +141,13 @@ async def make_call_async(client: Any, endpoint: str, **kwargs):
     except slack_sdk.errors.SlackApiError as e:
         log.error(f"SlackError. Response: {e.response} Endpoint: {endpoint} kwargs: {kwargs}")
 
-        if e.response.headers.get("Retry-After"):
-            wait = int(e.response.headers["Retry-After"])
-            log.info(f"SlackError: Rate limit hit. Waiting {wait} seconds.")
-            time.sleep(wait)
-            raise TryAgain
-        else:
+        if not e.response.headers.get("Retry-After"):
             raise e
 
+        wait = int(e.response.headers["Retry-After"])
+        log.info(f"SlackError: Rate limit hit. Waiting {wait} seconds.")
+        time.sleep(wait)
+        raise TryAgain
     return response
 
 
@@ -314,9 +314,7 @@ def add_users_to_conversation(client: Any, conversation_id: str, user_ids: List[
         try:
             make_call(client, "conversations.invite", users=c, channel=conversation_id)
         except slack_sdk.errors.SlackApiError as e:
-            # sometimes slack sends duplicate member_join events that result in folks already existing in the channel.
-            if e.response["error"] == "already_in_channel":
-                pass
+            pass
 
 
 def send_message(

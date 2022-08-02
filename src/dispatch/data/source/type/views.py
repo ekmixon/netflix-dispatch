@@ -27,13 +27,15 @@ def get_source_types(*, common: dict = Depends(common_parameters)):
 @router.get("/{source_type_id}", response_model=SourceTypeRead)
 def get_source_type(*, db_session: Session = Depends(get_db), source_type_id: PrimaryKey):
     """Given its unique ID, retrieve details about a single source type."""
-    source_type = get(db_session=db_session, source_type_id=source_type_id)
-    if not source_type:
+    if source_type := get(
+        db_session=db_session, source_type_id=source_type_id
+    ):
+        return source_type
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The requested source type does not exist."}],
         )
-    return source_type
 
 
 @router.post("", response_model=SourceTypeRead)
@@ -50,22 +52,26 @@ def update_source_type(
     source_type_in: SourceTypeUpdate,
 ):
     """Update a source type."""
-    source_type = get(db_session=db_session, source_type_id=source_type_id)
-    if not source_type:
+    if source_type := get(
+        db_session=db_session, source_type_id=source_type_id
+    ):
+        return update(db_session=db_session, source_type=source_type, source_type_in=source_type_in)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An source type with this ID does not exist."}],
         )
-    return update(db_session=db_session, source_type=source_type, source_type_in=source_type_in)
 
 
 @router.delete("/{source_type_id}")
 def delete_source_type(*, db_session: Session = Depends(get_db), source_type_id: PrimaryKey):
     """Delete a source type, returning only an HTTP 200 OK if successful."""
-    source_type = get(db_session=db_session, source_type_id=source_type_id)
-    if not source_type:
+    if source_type := get(
+        db_session=db_session, source_type_id=source_type_id
+    ):
+        delete(db_session=db_session, source_type_id=source_type_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "An source type with this ID does not exist."}],
         )
-    delete(db_session=db_session, source_type_id=source_type_id)

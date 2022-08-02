@@ -21,14 +21,13 @@ log = logging.getLogger(__name__)
 
 def gen_conference_challenge(length: int):
     """Generate a random challenge for Zoom."""
-    if length > 10:
-        length = 10
+    length = min(length, 10)
     field = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     return "".join(random.sample(field, length))
 
 
 def delete_meeting(client, event_id: int):
-    return client.delete("/meetings/{}".format(event_id))
+    return client.delete(f"/meetings/{event_id}")
 
 
 def create_meeting(
@@ -41,14 +40,15 @@ def create_meeting(
 ):
     """Create a Zoom Meeting."""
     body = {
-        "topic": title if title else f"Situation Room for {name}",
-        "agenda": description if description else f"Situation Room for {name}. Please join.",
+        "topic": title or f"Situation Room for {name}",
+        "agenda": description or f"Situation Room for {name}. Please join.",
         "duration": duration,
         "password": gen_conference_challenge(8),
         "settings": {"join_before_host": True},
     }
 
-    return client.post("/users/{}/meetings".format(user_id), data=body)
+
+    return client.post(f"/users/{user_id}/meetings", data=body)
 
 
 @apply(timer, exclude=["__init__"])

@@ -41,8 +41,7 @@ def get_or_create(*, db_session, search_filter_in) -> SearchFilter:
     else:
         q = db_session.query(SearchFilter).filter_by(**search_filter_in.dict(exclude={"id"}))
 
-    instance = q.first()
-    if instance:
+    if instance := q.first():
         return instance
 
     return create(db_session=db_session, search_filter_in=search_filter_in)

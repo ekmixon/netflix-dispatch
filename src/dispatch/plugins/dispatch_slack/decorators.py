@@ -22,10 +22,9 @@ log = logging.getLogger(__name__)
 
 def get_plugin_configuration_from_channel_id(db_session: SessionLocal, channel_id: str) -> Plugin:
     """Fetches the currently slack plugin configuration for this incident channel."""
-    conversation = conversation_service.get_by_channel_id_ignoring_channel_type(
+    if conversation := conversation_service.get_by_channel_id_ignoring_channel_type(
         db_session, channel_id
-    )
-    if conversation:
+    ):
         plugin_instance = plugin_service.get_active_instance(
             db_session=db_session,
             plugin_type="conversation",
@@ -51,10 +50,9 @@ def get_organization_scope_from_channel_id(channel_id: str) -> SessionLocal:
         )
 
         scoped_db_session = sessionmaker(bind=schema_engine)()
-        conversation = conversation_service.get_by_channel_id_ignoring_channel_type(
+        if conversation := conversation_service.get_by_channel_id_ignoring_channel_type(
             db_session=scoped_db_session, channel_id=channel_id
-        )
-        if conversation:
+        ):
             return scoped_db_session
 
         scoped_db_session.close()
@@ -128,12 +126,14 @@ def slack_background_task(func):
 
             # slug passed directly is prefered over just having a channel_id
             organization_slug = kwargs.pop("organization_slug", None)
-            if not organization_slug:
-                scoped_db_session = get_organization_scope_from_channel_id(channel_id=channel_id)
-                if not scoped_db_session:
-                    scoped_db_session = get_default_organization_scope()
-            else:
-                scoped_db_session = get_organization_scope_from_slug(organization_slug)
+            scoped_db_session = (
+                get_organization_scope_from_slug(organization_slug)
+                if organization_slug
+                else get_organization_scope_from_channel_id(
+                    channel_id=channel_id
+                )
+                or get_default_organization_scope()
+            )
 
             background = True
             kwargs["db_session"] = scoped_db_session

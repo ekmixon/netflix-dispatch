@@ -21,11 +21,15 @@ def remove_control_characters(s):
 
 def replace_text(client: Any, document_id: str, replacements: List[str]):
     """Replaces text in specified document."""
-    requests = []
-    for k, v in replacements.items():
-        requests.append(
-            {"replaceAllText": {"containsText": {"text": k, "matchCase": "true"}, "replaceText": v}}
-        )
+    requests = [
+        {
+            "replaceAllText": {
+                "containsText": {"text": k, "matchCase": "true"},
+                "replaceText": v,
+            }
+        }
+        for k, v in replacements.items()
+    ]
 
     body = {"requests": requests}
     return client.batchUpdate(documentId=document_id, body=body).execute()

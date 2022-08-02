@@ -28,13 +28,13 @@ def get_tag_types(*, common: dict = Depends(common_parameters)):
 @router.get("/{tag_type_id}", response_model=TagTypeRead)
 def get_tag_type(*, db_session: Session = Depends(get_db), tag_type_id: PrimaryKey):
     """Get a tag type by its id."""
-    tag_type = get(db_session=db_session, tag_type_id=tag_type_id)
-    if not tag_type:
+    if tag_type := get(db_session=db_session, tag_type_id=tag_type_id):
+        return tag_type
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A tag type with this id does not exist."}],
         )
-    return tag_type
 
 
 @router.post("", response_model=TagTypeRead)
@@ -84,10 +84,10 @@ def update_tag_type(
 @router.delete("/{tag_type_id}")
 def delete_tag_type(*, db_session: Session = Depends(get_db), tag_type_id: PrimaryKey):
     """Delete a tag type."""
-    tag_type = get(db_session=db_session, tag_type_id=tag_type_id)
-    if not tag_type:
+    if tag_type := get(db_session=db_session, tag_type_id=tag_type_id):
+        delete(db_session=db_session, tag_type_id=tag_type_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "A tag type with this id does not exist."}],
         )
-    delete(db_session=db_session, tag_type_id=tag_type_id)

@@ -36,7 +36,7 @@ def update_incident(db_session: SessionLocal, channel_id: str, incident_id: int 
     """Builds all blocks required for the update incident modal."""
     incident = incident_service.get(db_session=db_session, incident_id=incident_id)
 
-    modal_template = {
+    return {
         "type": "modal",
         "title": {"type": "plain_text", "text": "Update Incident"},
         "blocks": [
@@ -68,10 +68,10 @@ def update_incident(db_session: SessionLocal, channel_id: str, incident_id: int 
         "close": {"type": "plain_text", "text": "Cancel"},
         "submit": {"type": "plain_text", "text": "Submit"},
         "callback_id": UpdateIncidentCallbackId.submit_form,
-        "private_metadata": json.dumps({"channel_id": str(channel_id), "incident_id": incident.id}),
+        "private_metadata": json.dumps(
+            {"channel_id": channel_id, "incident_id": incident.id}
+        ),
     }
-
-    return modal_template
 
 
 def report_incident(
@@ -99,13 +99,16 @@ def report_incident(
             },
             title_input_block(initial_value=title),
             description_input_block(initial_value=description),
-            project_select_block(db_session=db_session, initial_option=project),
+            project_select_block(
+                db_session=db_session, initial_option=project
+            ),
         ],
         "close": {"type": "plain_text", "text": "Cancel"},
         "submit": {"type": "plain_text", "text": "Submit"},
         "callback_id": ReportIncidentCallbackId.update_view,
-        "private_metadata": json.dumps({"channel_id": str(channel_id)}),
+        "private_metadata": json.dumps({"channel_id": channel_id}),
     }
+
 
     # switch from update to submit when we have a project
     if project:
@@ -251,7 +254,7 @@ def add_timeline_event(incident: Incident):
     modal_template["blocks"].append(date_picker_block)
 
     hour_picker_options = []
-    for h in range(0, 24):
+    for h in range(24):
         h = str(h).zfill(2)
         hour_picker_options.append(option_from_template(text=f"{h}:00", value=h))
 
@@ -268,9 +271,9 @@ def add_timeline_event(incident: Incident):
     }
     modal_template["blocks"].append(hour_picker_block)
 
-    minute_picker_options = []
-    for m in range(0, 60):
-        minute_picker_options.append(option_from_template(text=m, value=str(m).zfill(2)))
+    minute_picker_options = [
+        option_from_template(text=m, value=str(m).zfill(2)) for m in range(60)
+    ]
 
     minute_picker_block = {
         "type": "input",

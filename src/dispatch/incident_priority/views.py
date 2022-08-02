@@ -35,8 +35,7 @@ def create_incident_priority(
     incident_priority_in: IncidentPriorityCreate,
 ):
     """Create a new incident priority."""
-    incident_priority = create(db_session=db_session, incident_priority_in=incident_priority_in)
-    return incident_priority
+    return create(db_session=db_session, incident_priority_in=incident_priority_in)
 
 
 @router.put(
@@ -71,10 +70,12 @@ def get_incident_priority(
     *, db_session: Session = Depends(get_db), incident_priority_id: PrimaryKey
 ):
     """Get an incident priority."""
-    incident_priority = get(db_session=db_session, incident_priority_id=incident_priority_id)
-    if not incident_priority:
+    if incident_priority := get(
+        db_session=db_session, incident_priority_id=incident_priority_id
+    ):
+        return incident_priority
+    else:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=[{"msg": "The incident priority with this id does not exist."}],
         )
-    return incident_priority

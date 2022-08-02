@@ -92,10 +92,11 @@ class Incident(Base, TimeStampMixin, ProjectMixin):
     @hybrid_property
     def tactical_reports(self):
         if self.reports:
-            tactical_reports = [
-                report for report in self.reports if report.type == ReportTypes.tactical_report
+            return [
+                report
+                for report in self.reports
+                if report.type == ReportTypes.tactical_report
             ]
-            return tactical_reports
 
     @hybrid_property
     def last_tactical_report(self):
@@ -105,10 +106,11 @@ class Incident(Base, TimeStampMixin, ProjectMixin):
     @hybrid_property
     def executive_reports(self):
         if self.reports:
-            executive_reports = [
-                report for report in self.reports if report.type == ReportTypes.executive_report
+            return [
+                report
+                for report in self.reports
+                if report.type == ReportTypes.executive_report
             ]
-            return executive_reports
 
     @hybrid_property
     def last_executive_report(self):
@@ -198,10 +200,7 @@ class Incident(Base, TimeStampMixin, ProjectMixin):
     @hybrid_property
     def total_cost(self):
         if self.incident_costs:
-            total_cost = 0
-            for cost in self.incident_costs:
-                total_cost += cost.amount
-            return total_cost
+            return sum(cost.amount for cost in self.incident_costs)
 
     @observes("participants")
     def participant_observer(self, participants):

@@ -69,7 +69,7 @@ def paginated(data_key):
                 if not next_token:
                     break
 
-                kwargs.update({"pageToken": next_token})
+                kwargs["pageToken"] = next_token
 
                 if len(results) > limit:
                     break
@@ -232,10 +232,10 @@ def add_reply(
     """Adds a reply to a comment."""
     if resolved:
         action = "resolve"
-        content = content if content else "Resolved by Dispatch"
+        content = content or "Resolved by Dispatch"
     else:
         action = "reopen"
-        content = content if content else "Reopened by Dispatch"
+        content = content or "Reopened by Dispatch"
 
     body = {"content": content, "action": action}
     return make_call(
