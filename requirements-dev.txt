@@ -28,7 +28,7 @@ executing==0.8.3
     # via
     #   devtools
     #   stack-data
-factory-boy==3.2.1
+factory-boy==3.3.0
     # via -r requirements-dev.in
 faker==13.14.0
     # via
@@ -91,9 +91,7 @@ stack-data==0.2.0
 toml==0.10.2
     # via vulture
 tomli==2.0.1
-    # via
-    #   black
-    #   pytest
+    # via pytest
 traitlets==5.1.1
     # via
     #   ipython
