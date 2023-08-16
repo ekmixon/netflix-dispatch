@@ -18,7 +18,7 @@ click==8.0.4
     # via
     #   -r requirements-dev.in
     #   black
-coverage==6.4.1
+coverage==7.3.0
     # via -r requirements-dev.in
 decorator==5.1.1
     # via ipython
@@ -91,9 +91,7 @@ stack-data==0.2.0
 toml==0.10.2
     # via vulture
 tomli==2.0.1
-    # via
-    #   black
-    #   pytest
+    # via pytest
 traitlets==5.1.1
     # via
     #   ipython
