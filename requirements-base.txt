@@ -373,7 +373,7 @@ starlette==0.19.1
     # via
     #   fastapi
     #   schemathesis
-statsmodels==0.13.2
+statsmodels==0.14.0
     # via -r requirements-base.in
 tabulate==0.8.10
     # via -r requirements-base.in
@@ -399,6 +399,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
