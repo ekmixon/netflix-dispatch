@@ -88,17 +88,18 @@ six==1.16.0
     #   python-dateutil
 stack-data==0.2.0
     # via ipython
-toml==0.10.2
-    # via vulture
 tomli==2.0.1
     # via
     #   black
     #   pytest
+    #   vulture
 traitlets==5.1.1
     # via
     #   ipython
     #   matplotlib-inline
-vulture==2.4
+typing-extensions==4.9.0
+    # via black
+vulture==2.11
     # via -r requirements-dev.in
 wcwidth==0.2.5
     # via prompt-toolkit
