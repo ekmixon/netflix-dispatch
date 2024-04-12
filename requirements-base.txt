@@ -6,7 +6,7 @@
 #
 aiofiles==0.8.0
     # via -r requirements-base.in
-aiohttp==3.8.1
+aiohttp==3.9.4
     # via -r requirements-base.in
 aiosignal==1.2.0
     # via aiohttp
@@ -57,9 +57,7 @@ chardet==5.0.0
     #   -r requirements-base.in
     #   emails
 charset-normalizer==2.0.12
-    # via
-    #   aiohttp
-    #   requests
+    # via requests
 click==8.0.4
     # via
     #   -r requirements-base.in
@@ -399,6 +397,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
