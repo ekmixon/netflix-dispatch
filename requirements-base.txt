@@ -26,6 +26,8 @@ attrs==21.4.0
     #   jsonschema
     #   pytest
     #   schemathesis
+backoff==2.2.1
+    # via schemathesis
 bcrypt==3.2.2
     # via -r requirements-base.in
 blis==0.7.7
@@ -132,7 +134,9 @@ httplib2==0.20.4
     #   google-auth-httplib2
     #   oauth2client
 httpx==0.23.0
-    # via -r requirements-base.in
+    # via
+    #   -r requirements-base.in
+    #   schemathesis
 hypothesis==6.43.1
     # via
     #   hypothesis-graphql
@@ -312,7 +316,7 @@ rsa==4.8
     #   python-jose
 schedule==1.1.0
     # via -r requirements-base.in
-schemathesis==3.15.6
+schemathesis==3.17.4
     # via -r requirements-base.in
 scipy==1.8.0
     # via statsmodels
@@ -399,6 +403,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
