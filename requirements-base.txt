@@ -278,7 +278,7 @@ python-multipart==0.0.5
     # via -r requirements-base.in
 python-slugify==6.1.2
     # via -r requirements-base.in
-pytz==2022.1
+pytz==2024.1
     # via
     #   -r requirements-base.in
     #   pandas
@@ -399,6 +399,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
