@@ -217,7 +217,7 @@ patsy==0.5.2
     # via statsmodels
 pbr==5.8.1
     # via jira
-pdpyras==4.5.0
+pdpyras==5.4.0
     # via -r requirements-base.in
 pluggy==1.0.0
     # via pytest
@@ -399,6 +399,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
