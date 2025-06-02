@@ -4,7 +4,7 @@
 #
 #    pip-compile --no-emit-index-url requirements-base.in
 #
-aiofiles==0.8.0
+aiofiles==24.1.0
     # via -r requirements-base.in
 aiohttp==3.8.1
     # via -r requirements-base.in
@@ -399,6 +399,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
