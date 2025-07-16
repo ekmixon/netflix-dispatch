@@ -30,7 +30,7 @@ executing==0.8.3
     #   stack-data
 factory-boy==3.2.1
     # via -r requirements-dev.in
-faker==13.14.0
+faker==37.4.2
     # via
     #   -r requirements-dev.in
     #   factory-boy
@@ -80,12 +80,8 @@ pyparsing==3.0.9
     # via packaging
 pytest==7.1.2
     # via -r requirements-dev.in
-python-dateutil==2.8.2
-    # via faker
 six==1.16.0
-    # via
-    #   asttokens
-    #   python-dateutil
+    # via asttokens
 stack-data==0.2.0
     # via ipython
 toml==0.10.2
@@ -98,6 +94,10 @@ traitlets==5.1.1
     # via
     #   ipython
     #   matplotlib-inline
+typing-extensions==4.14.1
+    # via black
+tzdata==2025.2
+    # via faker
 vulture==2.4
     # via -r requirements-dev.in
 wcwidth==0.2.5
