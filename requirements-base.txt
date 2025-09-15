@@ -254,7 +254,7 @@ pydantic==1.8.2
     #   thinc
 pyjwt==2.4.0
     # via oauthlib
-pyparsing==3.0.9
+pyparsing==3.2.4
     # via
     #   -r requirements-base.in
     #   httplib2
@@ -399,6 +399,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
