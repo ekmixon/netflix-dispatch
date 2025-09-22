@@ -76,7 +76,7 @@ pyflakes==2.4.0
     # via flake8
 pygments==2.11.2
     # via ipython
-pyparsing==3.0.9
+pyparsing==3.2.5
     # via packaging
 pytest==7.1.2
     # via -r requirements-dev.in
@@ -98,6 +98,8 @@ traitlets==5.1.1
     # via
     #   ipython
     #   matplotlib-inline
+typing-extensions==4.15.0
+    # via black
 vulture==2.4
     # via -r requirements-dev.in
 wcwidth==0.2.5
