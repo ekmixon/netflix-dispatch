@@ -32,7 +32,7 @@ blis==0.7.7
     # via
     #   spacy
     #   thinc
-cachetools==5.2.0
+cachetools==5.5.2
     # via
     #   -r requirements-base.in
     #   google-auth
@@ -399,6 +399,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
