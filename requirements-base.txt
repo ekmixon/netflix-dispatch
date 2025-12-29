@@ -274,7 +274,7 @@ python-dateutil==2.8.2
     #   pandas
 python-jose==3.3.0
     # via -r requirements-base.in
-python-multipart==0.0.5
+python-multipart==0.0.20
     # via -r requirements-base.in
 python-slugify==6.1.2
     # via -r requirements-base.in
@@ -334,7 +334,6 @@ six==1.16.0
     #   oauth2client
     #   patsy
     #   python-dateutil
-    #   python-multipart
     #   sqlalchemy-filters
     #   sqlalchemy-utils
     #   validators
@@ -399,6 +398,7 @@ typing-extensions==4.2.0
     # via
     #   pydantic
     #   schemathesis
+    #   starlette
 uritemplate==4.1.1
     # via google-api-python-client
 urllib3==1.26.9
